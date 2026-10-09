@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giám Sát Bao Bì Realtime</title>
+    <!-- Thư viện Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef2f5; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; text-align: center; }
+        h2 { color: #2c3e50; margin-bottom: 25px; }
+        .dashboard { display: flex; gap: 15px; }
+        .card { flex: 1; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .card h4 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 13px; text-transform: uppercase; }
+        .card .number { font-size: 32px; font-weight: bold; color: #2c3e50; }
+        .card.error .number { color: #e74c3c; }
+        .card.pos .number { font-size: 18px; color: #e67e22; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>GIÁM SÁT SẢN XUẤT BAO BÌ THỜI GIAN THỰC</h2>
+
+    <div class="dashboard">
+        <div class="card">
+            <h4>TỔNG BAO BÌ TRONG NGÀY</h4>
+            <div id="total" class="number">0</div>
+        </div>
+        <div class="card error">
+            <h4>SỐ NHÃN LỖI</h4>
+            <div id="errors" class="number">0</div>
+        </div>
+        <div class="card pos">
+            <h4>VỊ TRÍ LỖI MỚI NHẤT</h4>
+            <div id="position" class="number">Chưa có</div>
+        </div>
+    </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k",
+    authDomain: "decalwebserver.firebaseapp.com",
+    projectId: "decalwebserver",
+    storageBucket: "decalwebserver.firebasestorage.app",
+    messagingSenderId: "331794269229",
+    appId: "1:331794269229:web:32f7be72cc879ff4bb64a4",
+    measurementId: "G-WBJY5N4833",
+    databaseURL: "https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // Đọc biến từ Firebase Realtime
+  database.ref('ProductionData').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      document.getElementById('total').innerText = data.totalPackages || 0;
+      document.getElementById('errors').innerText = data.errorLabels || 0;
+      document.getElementById('position').innerText = data.lastErrorPosition || "Chưa có";
+    }
+  });
+</script>
+
+</body>
+</html>
