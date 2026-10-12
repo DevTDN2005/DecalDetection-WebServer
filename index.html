@@ -9,7 +9,10 @@
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 24px; background: #232728; color: #c4ddff; font-family: 'Segoe UI', Arial, sans-serif; }
-    .clock { width: fit-content; margin: 0 0 20px auto; padding: 10px 16px; border: 1px solid #3d484f; border-radius: 10px; background: #111; text-align: right; }
+    .topbar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .theme-toggle { padding: 12px 16px; border: 1px solid #3d484f; border-radius: 10px; background: #111; color: #c4ddff; font: 600 14px "Segoe UI", Arial, sans-serif; cursor: pointer; }
+    .theme-toggle:focus-visible { outline: 2px solid #ffa337; outline-offset: 3px; }
+    .clock { width: fit-content; margin: 0; padding: 10px 16px; border: 1px solid #3d484f; border-radius: 10px; background: #111; text-align: right; }
     .clock-label { font-size: 11px; color: #859da9; }
     #time { margin: 4px 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
     #date { font-size: 13px; color: #a3b5bf; }
@@ -35,14 +38,28 @@
     .latest { color: #ffa337; font-weight: 700; }
     #status { margin: 20px 0; color: #a3b5bf; font-size: 14px; }
     @media (max-width: 500px) { body { padding: 16px; } .positions-panel { padding: 16px; border-radius: 12px; } summary { font-size: 21px; } .card { padding: 20px 8px; } }
+    body.light { background: #eef2f5; color: #2c3e50; color-scheme: light; }
+    body:not(.light) { color-scheme: dark; }
+    body.light .clock, body.light .theme-toggle, body.light .card, body.light .positions-panel { background: #fff; }
+    body.light .clock, body.light .theme-toggle { border-color: #ccd5dd; }
+    body.light .theme-toggle { color: #2c3e50; }
+    body.light .clock-label, body.light .card h4 { color: #667783; }
+    body.light #date, body.light #status, body.light #position .empty { color: #667783; }
+    body.light summary { background: #fff8f0; color: #a85200; }
+    body.light #position li { border-bottom-color: #e0e6eb; }
+    body.light .latest { color: #a85200; }
+    @media (max-width: 380px) { .topbar { gap: 8px; } .theme-toggle { padding: 10px; } .clock { padding: 10px; } }
   </style>
 </head>
 <body>
+  <div class="topbar">
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Bật chế độ sáng">☀ Chế độ sáng</button>
   <aside class="clock" aria-label="Đồng hồ giờ Việt Nam">
     <div class="clock-label">THỜI GIAN HIỆN TẠI · VIỆT NAM</div>
     <div id="time">--:--:--</div>
     <div id="date">--/--/----</div>
   </aside>
+  </div>
   <main class="container">
     <h2>GIÁM SÁT SẢN XUẤT BAO BÌ THỜI GIAN THỰC</h2>
     <div class="dashboard">
@@ -58,6 +75,21 @@
     <p id="status" role="status">Đang kết nối Firebase…</p>
   </main>
   <script>
+    const themeButton = document.getElementById('theme-toggle');
+    function applyTheme(isLight) {
+      document.body.classList.toggle('light', isLight);
+      themeButton.textContent = isLight ? '☾ Chế độ tối' : '☀ Chế độ sáng';
+      themeButton.setAttribute('aria-pressed', String(isLight));
+      themeButton.setAttribute('aria-label', isLight ? 'Bật chế độ tối' : 'Bật chế độ sáng');
+    }
+    let savedTheme = 'dark';
+    try { savedTheme = localStorage.getItem('production-theme') || 'dark'; } catch (_) {}
+    applyTheme(savedTheme === 'light');
+    themeButton.addEventListener('click', () => {
+      const isLight = !document.body.classList.contains('light');
+      applyTheme(isLight);
+      try { localStorage.setItem('production-theme', isLight ? 'light' : 'dark'); } catch (_) {}
+    });
     const timeFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     const dateFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
     function updateClock() {
