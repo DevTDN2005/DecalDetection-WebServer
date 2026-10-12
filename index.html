@@ -151,6 +151,9 @@
 
       positionSelect.replaceChildren();
 
+      //Mỗi bản ghi tương ứng với 1 decal lỗi
+      document.getElementById('errors').textContent = items.length;
+
       // Không có decal lỗi thì khung danh sách để trống.
       items.forEach(item => {
         const row = document.createElement('li');
@@ -199,7 +202,7 @@
         hasData = snapshot.exists();
         readError = false;
         document.getElementById('total').textContent = data.totalPackages ?? 0;
-        document.getElementById('errors').textContent = data.errorLabels ?? 0;
+        //document.getElementById('errors').textContent = data.errorLabels ?? 0;
         renderPositions(data);
         updateStatus();
       }, error => {
