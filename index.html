@@ -61,7 +61,7 @@
   </aside>
   </div>
   <main class="container">
-    <h2>GIÁM SÁT SẢN XUẤT BAO BÌ THỜI GIAN THỰC</h2>
+    <h2>QUẢN LÝ SẢN XUẤT BAO BÌ</h2>
     <div class="dashboard">
       <div class="card"><h4>Số lượng</h4><div id="total" class="number">—</div></div>
       <div class="card error"><h4>Số nhãn lỗi</h4><div id="errors" class="number">—</div></div>
@@ -124,62 +124,58 @@
       return (typeof value === 'string' && value.trim() !== '' && value !== 'Chưa có') || typeof value === 'number';
     }
     function renderPositions(data) {
+      const source = data.errorPositions || {};
       const items = [];
-      // errorPositions có thể chứa giá trị trực tiếp hoặc bản ghi { position, timestamp }.
-      const source = data.errorPositions;
-      if (source && typeof source === 'object') {
-        Object.entries(source).forEach(([key, record]) => {
-          const value = record && typeof record === 'object' ? record.position : record;
-          if (validPosition(value)) items.push({ key, position: String(value), timestamp: Number(record && typeof record === 'object' ? record.timestamp : 0) || 0 });
+
+      Object.entries(source).forEach(([key, record]) => {
+        if (!record || typeof record !== 'object') return;
+
+        const count = Number(record.errorCount);
+
+        // Chỉ hiển thị decal có số lỗi là số nguyên dương.
+        if (!Number.isInteger(count) || count <= 0) return;
+        if (!validPosition(record.position)) return;
+
+        items.push({
+          key,
+          position: record.position,
+          errorCount: count,
+          imageUrl: record.imageUrl,
+          timestamp: Number(record.timestamp) || 0
         });
-      }
-      items.sort((a, b) => b.timestamp - a.timestamp || b.key.localeCompare(a.key));
-      const latest = data.lastErrorPosition;
-      if (validPosition(latest) && !items.some(item => item.position === String(latest))) {
-        items.unshift({ key: '__latest', position: String(latest), timestamp: 0 });
-      }
+      });
+
+      items.sort((a, b) =>
+        b.timestamp - a.timestamp || b.key.localeCompare(a.key)
+      );
+
       positionSelect.replaceChildren();
-      if (!items.length) {
-        showPositionMessage('Chưa có vị trí lỗi');
-        return;
-      }
+
+      // Không có decal lỗi thì khung danh sách để trống.
       items.forEach(item => {
         const row = document.createElement('li');
-        const record = data.errorPositions?.[item.key];
-
-        const count = record && typeof record === 'object'
-          ? record.errorCount
-          : null;
-
-        const imageUrl = record && typeof record === 'object'
-          ? record.imageUrl
-          : null;
 
         row.appendChild(document.createTextNode(
-          item.position + ' — ' +
-          (count != null ? count + ' lỗi' : 'Chưa có số lỗi') +
-          ' — '
+          item.position + ' — ' + item.errorCount + ' lỗi'
         ));
 
-        let validImageUrl = null;
+        // Chỉ thêm link khi có đường dẫn ảnh hợp lệ.
+        if (typeof item.imageUrl === 'string' && item.imageUrl.trim()) {
+          try {
+            const url = new URL(item.imageUrl);
 
-        try {
-          const url = new URL(imageUrl);
-          if (url.protocol === 'https:' || url.protocol === 'http:') {
-            validImageUrl = url.href;
-          }
-        } catch (_) {}
+            if (url.protocol === 'https:' || url.protocol === 'http:') {
+              const link = document.createElement('a');
+              link.href = url.href;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              link.textContent = 'Xem hình decal';
+              link.style.color = 'inherit';
 
-        if (validImageUrl) {
-          const link = document.createElement('a');
-          link.href = validImageUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = 'Xem hình decal';
-          link.style.color = 'inherit';
-          row.appendChild(link);
-        } else {
-          row.appendChild(document.createTextNode('Chưa có ảnh'));
+              row.appendChild(document.createTextNode(' — '));
+              row.appendChild(link);
+            }
+          } catch (_) {}
         }
 
         positionSelect.appendChild(row);
