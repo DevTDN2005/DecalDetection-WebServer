@@ -1,70 +1,140 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giám Sát Bao Bì Realtime</title>
-    <!-- Thư viện Firebase CDN -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef2f5; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; text-align: center; }
-        h2 { color: #2c3e50; margin-bottom: 25px; }
-        .dashboard { display: flex; gap: 15px; }
-        .card { flex: 1; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        .card h4 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 13px; text-transform: uppercase; }
-        .card .number { font-size: 32px; font-weight: bold; color: #2c3e50; }
-        .card.error .number { color: #e74c3c; }
-        .card.pos .number { font-size: 18px; color: #e67e22; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giám sát bao bì thời gian thực</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; background: #232728; color: #c4ddff; font-family: 'Segoe UI', Arial, sans-serif; }
+    .clock { width: fit-content; margin: 0 0 28px auto; padding: 14px 20px; border: 1px solid #3d484f; border-radius: 10px; background: #111; text-align: right; }
+    .clock-label { color: #859da9; font-size: 12px; }
+    #time { margin: 5px 0; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #date { color: #a3b5bf; font-size: 14px; }
+    .container { max-width: 1000px; margin: 0 auto; text-align: center; }
+    h2 { margin: 0 0 32px; font-size: clamp(20px, 3vw, 28px); }
+    .dashboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .card { padding: 28px 20px; border-radius: 12px; background: #111; }
+    .card h4, .card label { display: block; margin: 0 0 18px; color: #859da9; font-size: 14px; font-weight: 700; }
+    .number { font-size: 38px; font-weight: 700; }
+    .error .number { color: #ef4438; }
+    select { width: 100%; min-height: 46px; padding: 10px; border: 1px solid #de820e; border-radius: 6px; background: #21190f; color: #ffa337; font: 600 16px 'Segoe UI', Arial, sans-serif; cursor: pointer; }
+    select:focus-visible { outline: 2px solid #c4ddff; outline-offset: 3px; }
+    select:disabled { cursor: default; opacity: .7; }
+    #status { margin-top: 20px; color: #a3b5bf; font-size: 14px; }
+    @media (max-width: 700px) { .dashboard { grid-template-columns: 1fr; } body { padding: 16px; } }
+  </style>
 </head>
 <body>
-
-<div class="container">
+  <aside class="clock" aria-label="Đồng hồ giờ Việt Nam">
+    <div class="clock-label">THỜI GIAN HIỆN TẠI · VIỆT NAM</div>
+    <div id="time">--:--:--</div>
+    <div id="date">--/--/----</div>
+  </aside>
+  <main class="container">
     <h2>GIÁM SÁT SẢN XUẤT BAO BÌ THỜI GIAN THỰC</h2>
-
     <div class="dashboard">
-        <div class="card">
-            <h4>TỔNG BAO BÌ TRONG NGÀY</h4>
-            <div id="total" class="number">0</div>
-        </div>
-        <div class="card error">
-            <h4>SỐ NHÃN LỖI</h4>
-            <div id="errors" class="number">0</div>
-        </div>
-        <div class="card pos">
-            <h4>VỊ TRÍ LỖI MỚI NHẤT</h4>
-            <div id="position" class="number">Chưa có</div>
-        </div>
+      <div class="card"><h4>TỔNG SỐ LƯỢNG BAO BÌ</h4><div id="total" class="number">—</div></div>
+      <div class="card error"><h4>SỐ NHÃN LỖI</h4><div id="errors" class="number">—</div></div>
+      <div class="card">
+        <label for="position">DANH SÁCH VỊ TRÍ LỖI</label>
+        <select id="position" disabled><option>Đang tải dữ liệu…</option></select>
+      </div>
     </div>
-</div>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k",
-    authDomain: "decalwebserver.firebaseapp.com",
-    projectId: "decalwebserver",
-    storageBucket: "decalwebserver.firebasestorage.app",
-    messagingSenderId: "331794269229",
-    appId: "1:331794269229:web:32f7be72cc879ff4bb64a4",
-    measurementId: "G-WBJY5N4833",
-    databaseURL: "https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-
-  // Đọc biến từ Firebase Realtime
-  database.ref('ProductionData').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      document.getElementById('total').innerText = data.totalPackages || 0;
-      document.getElementById('errors').innerText = data.errorLabels || 0;
-      document.getElementById('position').innerText = data.lastErrorPosition || "Chưa có";
+    <p id="status" role="status">Đang kết nối Firebase…</p>
+  </main>
+  <script>
+    const timeFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const dateFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('time').textContent = timeFormat.format(now);
+      document.getElementById('date').textContent = dateFormat.format(now);
     }
-  });
-</script>
+    updateClock();
+    setInterval(updateClock, 1000);
 
+    const firebaseConfig = {
+      apiKey: 'AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k',
+      authDomain: 'decalwebserver.firebaseapp.com',
+      projectId: 'decalwebserver',
+      storageBucket: 'decalwebserver.firebasestorage.app',
+      messagingSenderId: '331794269229',
+      appId: '1:331794269229:web:32f7be72cc879ff4bb64a4',
+      measurementId: 'G-WBJY5N4833',
+      databaseURL: 'https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app'
+    };
+    const positionSelect = document.getElementById('position');
+    const status = document.getElementById('status');
+    let hasData = false;
+    let readError = false;
+    let connected = false;
+    function updateStatus() {
+      status.textContent = readError ? 'Không đọc được dữ liệu. Hãy kiểm tra quyền đọc Firebase và kết nối.'
+        : !connected ? 'Đang mất kết nối hoặc đang kết nối lại Firebase…'
+        : hasData ? 'Dữ liệu được cập nhật theo thời gian thực.' : 'Chưa có dữ liệu ProductionData.';
+    }
+    function validPosition(value) {
+      return (typeof value === 'string' && value.trim() !== '' && value !== 'Chưa có') || typeof value === 'number';
+    }
+    function renderPositions(data) {
+      const previousValue = positionSelect.value;
+      const items = [];
+      // errorPositions có thể chứa giá trị trực tiếp hoặc bản ghi { position, timestamp }.
+      const source = data.errorPositions;
+      if (source && typeof source === 'object') {
+        Object.entries(source).forEach(([key, record]) => {
+          const value = record && typeof record === 'object' ? record.position : record;
+          if (validPosition(value)) items.push({ key, position: String(value), timestamp: Number(record && typeof record === 'object' ? record.timestamp : 0) || 0 });
+        });
+      }
+      items.sort((a, b) => b.timestamp - a.timestamp || b.key.localeCompare(a.key));
+      const latest = data.lastErrorPosition;
+      if (validPosition(latest) && !items.some(item => item.position === String(latest))) {
+        items.unshift({ key: '__latest', position: String(latest), timestamp: 0 });
+      }
+      positionSelect.replaceChildren();
+      if (!items.length) {
+        positionSelect.add(new Option('Chưa có vị trí lỗi', ''));
+        positionSelect.disabled = true;
+        return;
+      }
+      items.forEach(item => positionSelect.add(new Option('Vị trí: ' + item.position, item.key)));
+      positionSelect.disabled = false;
+      const selected = items.find(item => item.key === previousValue);
+      const newest = items.find(item => validPosition(latest) && item.position === String(latest));
+      positionSelect.value = (selected || newest || items[0]).key;
+    }
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+      database.ref('.info/connected').on('value', snapshot => {
+        connected = snapshot.val() === true;
+        updateStatus();
+      });
+      database.ref('ProductionData').on('value', snapshot => {
+        const data = snapshot.val() || {};
+        hasData = snapshot.exists();
+        readError = false;
+        document.getElementById('total').textContent = data.totalPackages ?? 0;
+        document.getElementById('errors').textContent = data.errorLabels ?? 0;
+        renderPositions(data);
+        updateStatus();
+      }, error => {
+        readError = true;
+        updateStatus();
+        positionSelect.replaceChildren(new Option('Không đọc được dữ liệu', ''));
+        positionSelect.disabled = true;
+        console.error('Firebase:', error.code);
+      });
+    } catch (error) {
+      status.textContent = 'Không khởi tạo được Firebase. Hãy kiểm tra kết nối và cấu hình.';
+      positionSelect.replaceChildren(new Option('Không kết nối được Firebase', ''));
+      positionSelect.disabled = true;
+      console.error(error);
+    }
+  </script>
 </body>
 </html>
