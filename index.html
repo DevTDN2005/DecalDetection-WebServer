@@ -9,22 +9,32 @@
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 24px; background: #232728; color: #c4ddff; font-family: 'Segoe UI', Arial, sans-serif; }
-    .clock { width: fit-content; margin: 0 0 28px auto; padding: 14px 20px; border: 1px solid #3d484f; border-radius: 10px; background: #111; text-align: right; }
-    .clock-label { color: #859da9; font-size: 12px; }
-    #time { margin: 5px 0; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    #date { color: #a3b5bf; font-size: 14px; }
-    .container { max-width: 1000px; margin: 0 auto; text-align: center; }
-    h2 { margin: 0 0 32px; font-size: clamp(20px, 3vw, 28px); }
-    .dashboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-    .card { padding: 28px 20px; border-radius: 12px; background: #111; }
-    .card h4, .card label { display: block; margin: 0 0 18px; color: #859da9; font-size: 14px; font-weight: 700; }
-    .number { font-size: 38px; font-weight: 700; }
+    .clock { width: fit-content; margin: 0 0 20px auto; padding: 10px 16px; border: 1px solid #3d484f; border-radius: 10px; background: #111; text-align: right; }
+    .clock-label { font-size: 11px; color: #859da9; }
+    #time { margin: 4px 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #date { font-size: 13px; color: #a3b5bf; }
+    .container { max-width: 860px; margin: 0 auto; text-align: center; }
+    h2 { margin: 0 0 32px; font-size: clamp(24px, 4vw, 36px); }
+    .dashboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0 0 30px; }
+    .card { padding: 28px 20px; background: #111; border-radius: 12px; }
+    .card h4 { margin: 0 0 12px; font-size: 14px; color: #859da9; text-transform: uppercase; }
+    .number { font-size: 40px; font-weight: 700; }
     .error .number { color: #ef4438; }
-    select { width: 100%; min-height: 46px; padding: 10px; border: 1px solid #de820e; border-radius: 6px; background: #21190f; color: #ffa337; font: 600 16px 'Segoe UI', Arial, sans-serif; cursor: pointer; }
-    select:focus-visible { outline: 2px solid #c4ddff; outline-offset: 3px; }
-    select:disabled { cursor: default; opacity: .7; }
-    #status { margin-top: 20px; color: #a3b5bf; font-size: 14px; }
-    @media (max-width: 700px) { .dashboard { grid-template-columns: 1fr; } body { padding: 16px; } }
+    .positions-panel { padding: 24px; background: #111; border-radius: 12px; text-align: left; }
+    details { border: 1px solid #de820e; border-radius: 6px; overflow: hidden; }
+    summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; font-size: 20px; font-weight: 700; background: #21190f; color: #ffa337; cursor: pointer; list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: ''; width: 15px; height: 15px; border-right: 3px solid; border-bottom: 3px solid; transform: rotate(45deg); flex-shrink: 0; margin: 0 4px 7px; }
+    details[open] summary { border-bottom: 1px solid #de820e; }
+    details[open] summary::after { transform: rotate(225deg); margin-bottom: -7px; }
+    summary:focus-visible { outline: 3px solid #2878d0; outline-offset: 4px; }
+    #position { min-height: 280px; max-height: 400px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+    #position li { padding: 16px 18px; border-bottom: 1px solid #303537; font-size: 18px; overflow-wrap: anywhere; }
+    #position li:last-child { border-bottom: 0; }
+    #position .empty { color: #a3b5bf; text-align: center; padding-top: 60px; }
+    .latest { color: #ffa337; font-weight: 700; }
+    #status { margin: 20px 0; color: #a3b5bf; font-size: 14px; }
+    @media (max-width: 500px) { body { padding: 16px; } .positions-panel { padding: 16px; border-radius: 12px; } summary { font-size: 21px; } .card { padding: 20px 8px; } }
   </style>
 </head>
 <body>
@@ -36,13 +46,15 @@
   <main class="container">
     <h2>GIÁM SÁT SẢN XUẤT BAO BÌ THỜI GIAN THỰC</h2>
     <div class="dashboard">
-      <div class="card"><h4>TỔNG SỐ LƯỢNG BAO BÌ</h4><div id="total" class="number">—</div></div>
-      <div class="card error"><h4>SỐ NHÃN LỖI</h4><div id="errors" class="number">—</div></div>
-      <div class="card">
-        <label for="position">DANH SÁCH VỊ TRÍ LỖI</label>
-        <select id="position" disabled><option>Đang tải dữ liệu…</option></select>
-      </div>
+      <div class="card"><h4>Số lượng</h4><div id="total" class="number">—</div></div>
+      <div class="card error"><h4>Số nhãn lỗi</h4><div id="errors" class="number">—</div></div>
     </div>
+    <section class="positions-panel" aria-label="Danh sách vị trí lỗi">
+      <details open>
+        <summary>Vị trí lỗi</summary>
+        <ul id="position" aria-live="polite"><li class="empty">Đang tải dữ liệu…</li></ul>
+      </details>
+    </section>
     <p id="status" role="status">Đang kết nối Firebase…</p>
   </main>
   <script>
@@ -80,7 +92,6 @@
       return (typeof value === 'string' && value.trim() !== '' && value !== 'Chưa có') || typeof value === 'number';
     }
     function renderPositions(data) {
-      const previousValue = positionSelect.value;
       const items = [];
       // errorPositions có thể chứa giá trị trực tiếp hoặc bản ghi { position, timestamp }.
       const source = data.errorPositions;
@@ -97,15 +108,22 @@
       }
       positionSelect.replaceChildren();
       if (!items.length) {
-        positionSelect.add(new Option('Chưa có vị trí lỗi', ''));
-        positionSelect.disabled = true;
+        showPositionMessage('Chưa có vị trí lỗi');
         return;
       }
-      items.forEach(item => positionSelect.add(new Option('Vị trí: ' + item.position, item.key)));
-      positionSelect.disabled = false;
-      const selected = items.find(item => item.key === previousValue);
-      const newest = items.find(item => validPosition(latest) && item.position === String(latest));
-      positionSelect.value = (selected || newest || items[0]).key;
+      items.forEach(item => {
+        const row = document.createElement('li');
+        const isLatest = validPosition(latest) && item.position === String(latest);
+        row.textContent = 'Vị trí: ' + item.position + (isLatest ? ' — Mới nhất' : '');
+        if (isLatest) row.className = 'latest';
+        positionSelect.appendChild(row);
+      });
+    }
+    function showPositionMessage(message) {
+      const row = document.createElement('li');
+      row.className = 'empty';
+      row.textContent = message;
+      positionSelect.replaceChildren(row);
     }
     try {
       firebase.initializeApp(firebaseConfig);
@@ -125,14 +143,12 @@
       }, error => {
         readError = true;
         updateStatus();
-        positionSelect.replaceChildren(new Option('Không đọc được dữ liệu', ''));
-        positionSelect.disabled = true;
+        showPositionMessage('Không đọc được dữ liệu');
         console.error('Firebase:', error.code);
       });
     } catch (error) {
       status.textContent = 'Không khởi tạo được Firebase. Hãy kiểm tra kết nối và cấu hình.';
-      positionSelect.replaceChildren(new Option('Không kết nối được Firebase', ''));
-      positionSelect.disabled = true;
+      showPositionMessage('Không kết nối được Firebase');
       console.error(error);
     }
   </script>
