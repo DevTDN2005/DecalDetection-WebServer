@@ -145,9 +145,43 @@
       }
       items.forEach(item => {
         const row = document.createElement('li');
-        const isLatest = validPosition(latest) && item.position === String(latest);
-        row.textContent = 'Vị trí: ' + item.position + (isLatest ? ' — Mới nhất' : '');
-        if (isLatest) row.className = 'latest';
+        const record = data.errorPositions?.[item.key];
+
+        const count = record && typeof record === 'object'
+          ? record.errorCount
+          : null;
+
+        const imageUrl = record && typeof record === 'object'
+          ? record.imageUrl
+          : null;
+
+        row.appendChild(document.createTextNode(
+          item.position + ' — ' +
+          (count != null ? count + ' lỗi' : 'Chưa có số lỗi') +
+          ' — '
+        ));
+
+        let validImageUrl = null;
+
+        try {
+          const url = new URL(imageUrl);
+          if (url.protocol === 'https:' || url.protocol === 'http:') {
+            validImageUrl = url.href;
+          }
+        } catch (_) {}
+
+        if (validImageUrl) {
+          const link = document.createElement('a');
+          link.href = validImageUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = 'Xem hình decal';
+          link.style.color = 'inherit';
+          row.appendChild(link);
+        } else {
+          row.appendChild(document.createTextNode('Chưa có ảnh'));
+        }
+
         positionSelect.appendChild(row);
       });
     }
