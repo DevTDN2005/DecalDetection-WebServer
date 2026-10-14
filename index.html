@@ -118,7 +118,7 @@
     function updateStatus() {
       status.textContent = readError ? 'Không đọc được dữ liệu. Hãy kiểm tra quyền đọc Firebase và kết nối.'
         : !connected ? 'Đang mất kết nối hoặc đang kết nối lại Firebase…'
-        : hasData ? 'Dữ liệu được cập nhật theo thời gian thực.' : 'Chưa có dữ liệu ProductionData.';
+        : hasData ? ' ' : 'Hiện data đang trống';
     }
     function validPosition(value) {
       return (typeof value === 'string' && value.trim() !== '' && value !== 'Chưa có') || typeof value === 'number';
