@@ -3,437 +3,2482 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý sản xuất decal theo cuộn</title>
+
+  <title>Quản lý sản xuất bao bì</title>
+
+  <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     :root {
-      --bg:#232728; --panel:#111; --panel-soft:#191d1f; --text:#c4ddff;
-      --muted:#859da9; --border:#3d484f; --accent:#ffa337;
-      --accent-dark:#de820e; --danger:#ef4438;
+      --bg: #232728;
+      --panel: #111111;
+      --panel-soft: #181c1e;
+      --panel-soft-2: #202629;
+
+      --text: #c4ddff;
+      --text-main: #e4eef8;
+      --muted: #859da9;
+
+      --border: #3d484f;
+
+      --accent: #ffa337;
+      --accent-dark: #de820e;
+
+      --danger: #ef4438;
+      --success: #39c76f;
     }
-    body { margin:0; padding:24px; background:var(--bg); color:var(--text); font-family:"Segoe UI",Arial,sans-serif; }
-    button { font:inherit; }
-    .topbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
-    .theme-toggle { padding:11px 15px; border:1px solid var(--border); border-radius:10px; background:var(--panel); color:var(--text); font-weight:600; cursor:pointer; }
-    .container { max-width:980px; margin:0 auto; }
-    .date-navigation { display:flex; justify-content:center; align-items:center; gap:14px; margin:2px 0 18px; }
-    .date-button { min-width:58px; height:42px; border:1px solid var(--border); border-radius:10px; background:var(--panel); color:var(--text); font-size:22px; font-weight:700; cursor:pointer; }
-    .date-button:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
-    .date-button:disabled { opacity:.35; cursor:not-allowed; }
-    .date-value { min-width:190px; padding:8px 18px; text-align:center; font-size:21px; font-weight:800; font-variant-numeric:tabular-nums; }
-    h2 { margin:0 0 30px; text-align:center; font-size:clamp(25px,4vw,36px); }
-    .dashboard { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-bottom:26px; }
-    .card { min-height:135px; padding:26px 20px; border-radius:14px; background:var(--panel); text-align:center; }
-    .card h4 { margin:0 0 14px; color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.5px; }
-    .number { font-size:42px; font-weight:800; font-variant-numeric:tabular-nums; }
-    .error-card .number { color:var(--danger); }
-    .roll-caption { margin-top:6px; color:var(--muted); font-size:12px; }
-    .rolls-panel { padding:22px; border-radius:14px; background:var(--panel); }
-    details { overflow:hidden; border:1px solid var(--accent-dark); border-radius:8px; }
-    summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; list-style:none; cursor:pointer; user-select:none; }
-    summary::-webkit-details-marker { display:none; }
-    summary::after { content:""; width:13px; height:13px; border-right:3px solid currentColor; border-bottom:3px solid currentColor; transform:rotate(45deg); transition:transform .18s ease; flex-shrink:0; margin-right:4px; margin-bottom:6px; }
-    details[open] > summary::after { transform:rotate(225deg); margin-bottom:-5px; }
-    .rolls-summary { background:#21190f; color:var(--accent); font-size:20px; font-weight:800; }
-    .roll-list { display:grid; gap:10px; padding:12px; max-height:470px; overflow-y:auto; }
-    .roll-item { border-color:#46515a; background:var(--panel-soft); }
-    .roll-summary { padding:13px 16px; color:var(--text); background:#171b1d; font-size:16px; font-weight:700; }
-    .error-list { margin:0; padding:0; list-style:none; background:var(--panel); }
-    .error-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(100px,.8fr) 90px; align-items:center; gap:12px; padding:13px 16px; border-top:1px solid #303537; font-size:15px; }
-    .check-link { justify-self:end; padding:6px 12px; border:1px solid var(--accent-dark); border-radius:7px; color:var(--accent); text-decoration:none; font-weight:700; }
-    .check-link:hover { background:#2a1e10; }
-    .check-disabled { justify-self:end; color:var(--muted); font-size:13px; }
-    .empty { padding:52px 20px; text-align:center; color:var(--muted); }
-    #status { min-height:20px; margin:16px 0 0; text-align:center; color:var(--muted); font-size:13px; }
-    body.light { --bg:#eef2f5; --panel:#fff; --panel-soft:#f8fafb; --text:#2c3e50; --muted:#667783; --border:#ccd5dd; color-scheme:light; }
-    body:not(.light) { color-scheme:dark; }
-    body.light .rolls-summary { background:#fff8f0; color:#a85200; }
-    body.light .roll-summary { background:#f4f7f9; }
-    body.light .check-link { color:#a85200; }
-    body.light .check-link:hover { background:#fff6ec; }
-    body.light .error-row { border-top-color:#e0e6eb; }
-    @media (max-width:650px) {
-      body { padding:14px; }
-      .dashboard { grid-template-columns:1fr; }
-      .date-navigation { gap:8px; }
-      .date-value { min-width:150px; font-size:18px; }
-      .date-button { min-width:48px; }
-      .rolls-panel { padding:14px; }
-      .error-row { grid-template-columns:1fr auto; }
-      .error-count { grid-column:1 / 2; }
-      .check-link,.check-disabled { grid-column:2; grid-row:1 / span 2; }
+
+    body {
+      margin: 0;
+      padding: 22px 26px 40px;
+
+      background: var(--bg);
+      color: var(--text);
+
+      font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
     }
+
+    button {
+      font-family: inherit;
+    }
+
+    /* ============================================================
+       PAGE
+       ============================================================ */
+
+    .page {
+      width: min(95vw, 1500px);
+      margin: 0 auto;
+    }
+
+    /* ============================================================
+       TOP BAR
+       ============================================================ */
+
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      margin-bottom: 8px;
+    }
+
+    .theme-toggle {
+      padding: 10px 15px;
+
+      border: 1px solid var(--border);
+      border-radius: 9px;
+
+      background: var(--panel);
+      color: var(--text);
+
+      font-weight: 600;
+
+      cursor: pointer;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    /* ============================================================
+       DATE NAVIGATION
+       ============================================================ */
+
+    .date-navigation {
+      display: flex;
+
+      justify-content: center;
+      align-items: center;
+
+      gap: 16px;
+
+      margin: 8px 0 18px;
+    }
+
+    .date-button {
+      width: 54px;
+      height: 42px;
+
+      border: 1px solid var(--border);
+      border-radius: 9px;
+
+      background: var(--panel);
+      color: var(--text);
+
+      font-size: 21px;
+      font-weight: 800;
+
+      cursor: pointer;
+    }
+
+    .date-button:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .date-button:disabled {
+      opacity: 0.28;
+
+      cursor: not-allowed;
+    }
+
+    .date-value {
+      min-width: 180px;
+
+      text-align: center;
+
+      font-size: 21px;
+      font-weight: 800;
+
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ============================================================
+       TITLE
+       ============================================================ */
+
+    h1 {
+      margin: 0 0 28px;
+
+      text-align: center;
+
+      font-size: clamp(
+        26px,
+        3vw,
+        38px
+      );
+
+      color: var(--text-main);
+    }
+
+    /* ============================================================
+       CURRENT ROLL CARDS
+       ============================================================ */
+
+    .summary-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(0, 1fr)
+        );
+
+      gap: 18px;
+
+      max-width: 900px;
+
+      margin: 0 auto 26px;
+    }
+
+    .summary-card {
+      min-height: 135px;
+
+      padding: 25px 20px;
+
+      border-radius: 14px;
+
+      background: var(--panel);
+
+      text-align: center;
+    }
+
+    .summary-card h3 {
+      margin: 0 0 12px;
+
+      color: var(--muted);
+
+      font-size: 14px;
+
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-number {
+      font-size: 42px;
+      font-weight: 800;
+
+      font-variant-numeric: tabular-nums;
+    }
+
+    .error-summary .summary-number {
+      color: var(--danger);
+    }
+
+    .summary-caption {
+      margin-top: 5px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+    }
+
+    /* ============================================================
+       MAIN MANAGEMENT GRID
+       ============================================================ */
+
+    .management-grid {
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+      gap: 22px;
+
+      align-items: start;
+    }
+
+    .management-panel {
+      padding: 18px;
+
+      border-radius: 14px;
+
+      background: var(--panel);
+    }
+
+    /* ============================================================
+       MAIN DETAILS
+       ============================================================ */
+
+    details {
+      overflow: hidden;
+
+      border:
+        1px solid var(--accent-dark);
+
+      border-radius: 8px;
+    }
+
+    summary {
+      display: flex;
+
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 10px;
+
+      padding: 14px 16px;
+
+      list-style: none;
+
+      cursor: pointer;
+
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "";
+
+      width: 12px;
+      height: 12px;
+
+      border-right:
+        3px solid currentColor;
+
+      border-bottom:
+        3px solid currentColor;
+
+      transform: rotate(45deg);
+
+      margin-right: 4px;
+      margin-bottom: 6px;
+
+      transition:
+        transform 0.18s ease;
+
+      flex-shrink: 0;
+    }
+
+    details[open] > summary::after {
+      transform: rotate(225deg);
+
+      margin-bottom: -5px;
+    }
+
+    .panel-summary {
+      background: #21190f;
+
+      color: var(--accent);
+
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    /* ============================================================
+       ROLL MANAGEMENT
+       ============================================================ */
+
+    .roll-management-list {
+      display: grid;
+
+      gap: 8px;
+
+      padding: 12px;
+    }
+
+    .roll-row {
+      display: grid;
+
+      grid-template-columns:
+        100px
+        1fr
+        1.6fr;
+
+      align-items: center;
+
+      gap: 12px;
+
+      padding: 14px 15px;
+
+      border:
+        1px solid #30383d;
+
+      border-radius: 8px;
+
+      background:
+        var(--panel-soft);
+    }
+
+    .roll-name {
+      font-weight: 800;
+
+      color: var(--text-main);
+    }
+
+    .roll-total {
+      color: var(--text);
+    }
+
+    .roll-time {
+      text-align: right;
+
+      color: var(--muted);
+
+      font-variant-numeric: tabular-nums;
+    }
+
+    .roll-running {
+      color: var(--success);
+
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       ERROR ROLLS
+       ============================================================ */
+
+    .error-roll-list {
+      display: grid;
+
+      gap: 9px;
+
+      padding: 12px;
+    }
+
+    .error-roll {
+      border-color: #475158;
+
+      background:
+        var(--panel-soft);
+    }
+
+    .error-roll-summary {
+      background:
+        var(--panel-soft-2);
+
+      color: var(--text-main);
+
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .error-list {
+      margin: 0;
+      padding: 0;
+
+      list-style: none;
+    }
+
+    .error-row {
+      display: grid;
+
+      grid-template-columns:
+        1fr
+        110px
+        86px;
+
+      align-items: center;
+
+      gap: 10px;
+
+      padding: 13px 14px;
+
+      border-top:
+        1px solid #30383d;
+    }
+
+    .error-position {
+      color: var(--text);
+    }
+
+    .error-count {
+      color: var(--text);
+
+      text-align: center;
+    }
+
+    .check-link {
+      justify-self: end;
+
+      padding: 6px 11px;
+
+      border:
+        1px solid var(--accent-dark);
+
+      border-radius: 7px;
+
+      color: var(--accent);
+
+      text-decoration: none;
+
+      font-weight: 700;
+    }
+
+    .check-link:hover {
+      background: #2a1e10;
+    }
+
+    .check-disabled {
+      justify-self: end;
+
+      color: var(--muted);
+
+      font-size: 12px;
+    }
+
+    /* ============================================================
+       EMPTY
+       ============================================================ */
+
+    .empty {
+      padding: 42px 20px;
+
+      text-align: center;
+
+      color: var(--muted);
+    }
+
+    /* ============================================================
+       STATUS
+       ============================================================ */
+
+    #status {
+      min-height: 20px;
+
+      margin: 16px 0 0;
+
+      text-align: center;
+
+      color: var(--muted);
+
+      font-size: 13px;
+    }
+
+    /* ============================================================
+       LIGHT MODE
+       ============================================================ */
+
+    body.light {
+      --bg: #eef2f5;
+
+      --panel: #ffffff;
+      --panel-soft: #f7f9fa;
+      --panel-soft-2: #eef3f6;
+
+      --text: #2c3e50;
+      --text-main: #263746;
+
+      --muted: #667783;
+
+      --border: #ccd5dd;
+
+      color-scheme: light;
+    }
+
+    body:not(.light) {
+      color-scheme: dark;
+    }
+
+    body.light .panel-summary {
+      background: #fff8f0;
+
+      color: #a85200;
+    }
+
+    body.light .roll-row,
+    body.light .error-roll {
+      border-color: #d8e0e5;
+    }
+
+    body.light .error-row {
+      border-top-color: #dce3e7;
+    }
+
+    body.light .check-link {
+      color: #a85200;
+    }
+
+    body.light .check-link:hover {
+      background: #fff6ec;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+
+    @media (max-width: 900px) {
+
+      .management-grid {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+    @media (max-width: 650px) {
+
+      body {
+        padding: 14px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .roll-row {
+        grid-template-columns:
+          1fr
+          1fr;
+      }
+
+      .roll-time {
+        grid-column: 1 / -1;
+
+        text-align: left;
+      }
+
+      .error-row {
+        grid-template-columns:
+          1fr
+          auto;
+      }
+
+      .error-count {
+        text-align: left;
+      }
+
+      .check-link,
+      .check-disabled {
+        grid-column: 2;
+
+        grid-row:
+          1 / span 2;
+      }
+
+    }
+
   </style>
 </head>
-<body>
-  <div class="topbar">
-    <button id="theme-toggle" class="theme-toggle" type="button">☀ Chế độ sáng</button>
-  </div>
 
-  <main class="container">
-    <div class="date-navigation" aria-label="Chọn ngày sản xuất">
-      <button id="prev-day" class="date-button" type="button" title="Ngày trước">&lt;&lt;</button>
-      <div id="selected-date" class="date-value">--/--/----</div>
-      <button id="next-day" class="date-button" type="button" title="Ngày sau">&gt;&gt;</button>
+<body>
+
+  <main class="page">
+
+    <!-- ============================================================
+         THEME
+         ============================================================ -->
+
+    <div class="topbar">
+
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        type="button"
+      >
+        ☀ Chế độ sáng
+      </button>
+
     </div>
 
-    <h2>QUẢN LÝ SẢN XUẤT BAO BÌ</h2>
+    <!-- ============================================================
+         DATE
+         ============================================================ -->
 
-    <section class="dashboard">
-      <div class="card">
-        <h4>Tổng nhãn của cuộn</h4>
-        <div id="total-labels" class="number">0</div>
-        <div id="active-roll-label" class="roll-caption">Chưa có cuộn</div>
-      </div>
-      <div class="card error-card">
-        <h4>Số nhãn lỗi của cuộn</h4>
-        <div id="error-labels" class="number">0</div>
-        <div id="error-roll-label" class="roll-caption">Chưa có cuộn</div>
-      </div>
-    </section>
+    <div class="date-navigation">
 
-    <section class="rolls-panel">
-      <details open>
-        <summary class="rolls-summary">
-          <span>Số cuộn lỗi: <strong id="defective-roll-count">0</strong></span>
-        </summary>
-        <div id="roll-list" class="roll-list">
-          <div class="empty">Đang tải dữ liệu…</div>
+      <button
+        id="prev-day"
+        class="date-button"
+        type="button"
+      >
+        &lt;&lt;
+      </button>
+
+      <div
+        id="selected-date"
+        class="date-value"
+      >
+        --/--/----
+      </div>
+
+      <button
+        id="next-day"
+        class="date-button"
+        type="button"
+      >
+        &gt;&gt;
+      </button>
+
+    </div>
+
+    <!-- ============================================================
+         TITLE
+         ============================================================ -->
+
+    <h1>
+      QUẢN LÝ SẢN XUẤT BAO BÌ
+    </h1>
+
+    <!-- ============================================================
+         CURRENT ROLL
+         ============================================================ -->
+
+    <section class="summary-grid">
+
+      <div class="summary-card">
+
+        <h3>
+          Tổng nhãn của cuộn
+        </h3>
+
+        <div
+          id="current-total"
+          class="summary-number"
+        >
+          0
         </div>
-      </details>
+
+        <div
+          id="current-roll-caption"
+          class="summary-caption"
+        >
+          Chưa có cuộn
+        </div>
+
+      </div>
+
+      <div
+        class="
+          summary-card
+          error-summary
+        "
+      >
+
+        <h3>
+          Số nhãn lỗi của cuộn
+        </h3>
+
+        <div
+          id="current-error-total"
+          class="summary-number"
+        >
+          0
+        </div>
+
+        <div
+          id="current-error-caption"
+          class="summary-caption"
+        >
+          Chưa có cuộn
+        </div>
+
+      </div>
+
     </section>
 
-    <p id="status" role="status">Đang kết nối Firebase…</p>
+    <!-- ============================================================
+         2 COLUMN MANAGEMENT
+         ============================================================ -->
+
+    <section class="management-grid">
+
+      <!-- ==========================================================
+           LEFT
+           ALL ROLLS IN SELECTED DAY
+           ========================================================== -->
+
+      <div class="management-panel">
+
+        <details open>
+
+          <summary class="panel-summary">
+
+            <span>
+
+              Quản lý cuộn:
+
+              <strong
+                id="total-roll-count"
+              >
+                0
+              </strong>
+
+            </span>
+
+          </summary>
+
+          <div
+            id="roll-management-list"
+            class="roll-management-list"
+          >
+
+            <div class="empty">
+              Chưa có dữ liệu cuộn.
+            </div>
+
+          </div>
+
+        </details>
+
+      </div>
+
+      <!-- ==========================================================
+           RIGHT
+           ERROR ROLLS
+           ========================================================== -->
+
+      <div class="management-panel">
+
+        <details open>
+
+          <summary class="panel-summary">
+
+            <span>
+
+              Số cuộn lỗi:
+
+              <strong
+                id="error-roll-count"
+              >
+                0
+              </strong>
+
+            </span>
+
+          </summary>
+
+          <div
+            id="error-roll-list"
+            class="error-roll-list"
+          >
+
+            <div class="empty">
+              Chưa có dữ liệu lỗi.
+            </div>
+
+          </div>
+
+        </details>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================
+         STATUS
+         ============================================================ -->
+
+    <p
+      id="status"
+      role="status"
+    >
+      Đang kết nối Firebase…
+    </p>
+
   </main>
 
   <script>
-    const themeButton = document.getElementById("theme-toggle");
-    function applyTheme(isLight) {
-      document.body.classList.toggle("light", isLight);
-      themeButton.textContent = isLight ? "☾ Chế độ tối" : "☀ Chế độ sáng";
-    }
-    let savedTheme = "dark";
-    try { savedTheme = localStorage.getItem("production-theme") || "dark"; } catch (_) {}
-    applyTheme(savedTheme === "light");
-    themeButton.addEventListener("click", () => {
-      const isLight = !document.body.classList.contains("light");
-      applyTheme(isLight);
-      try { localStorage.setItem("production-theme", isLight ? "light" : "dark"); } catch (_) {}
-    });
 
-    const selectedDateEl = document.getElementById("selected-date");
-    const prevButton = document.getElementById("prev-day");
-    const nextButton = document.getElementById("next-day");
+    // ================================================================
+    // THEME
+    // ================================================================
 
-    function getVietnamDateParts(date = new Date()) {
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone:"Asia/Ho_Chi_Minh", year:"numeric", month:"2-digit", day:"2-digit"
-      }).formatToParts(date);
-      const get = type => parts.find(p => p.type === type).value;
-      return { year:Number(get("year")), month:Number(get("month")), day:Number(get("day")) };
-    }
-    function partsToKey(p) {
-      return String(p.year).padStart(4,"0") + "-" + String(p.month).padStart(2,"0") + "-" + String(p.day).padStart(2,"0");
-    }
-    function partsToDisplay(p) {
-      return String(p.day).padStart(2,"0") + "/" + String(p.month).padStart(2,"0") + "/" + String(p.year).padStart(4,"0");
-    }
-    function shiftDate(p, delta) {
-      const d = new Date(Date.UTC(p.year,p.month-1,p.day+delta,12));
-      return { year:d.getUTCFullYear(), month:d.getUTCMonth()+1, day:d.getUTCDate() };
-    }
-    function compareDate(a,b) { return partsToKey(a).localeCompare(partsToKey(b)); }
+    const themeButton =
+      document.getElementById(
+        "theme-toggle"
+      );
 
-    let todayParts = getVietnamDateParts();
-    let selectedParts = { ...todayParts };
-    let selectedDateRef = null;
-    let legacyRef = null;
+    function applyTheme(
+      isLight
+    ) {
 
-    function updateDateUi() {
-      selectedDateEl.textContent = partsToDisplay(selectedParts);
-      nextButton.disabled = compareDate(selectedParts,todayParts) >= 0;
-    }
-    prevButton.addEventListener("click", () => {
-      selectedParts = shiftDate(selectedParts,-1);
-      updateDateUi();
-      subscribeSelectedDay();
-    });
-    nextButton.addEventListener("click", () => {
-      if (nextButton.disabled) return;
-      selectedParts = shiftDate(selectedParts,1);
-      if (compareDate(selectedParts,todayParts) > 0) selectedParts = { ...todayParts };
-      updateDateUi();
-      subscribeSelectedDay();
-    });
+      document.body
+        .classList
+        .toggle(
+          "light",
+          isLight
+        );
 
-    setInterval(() => {
-      const newToday = getVietnamDateParts();
-      if (partsToKey(newToday) !== partsToKey(todayParts)) {
-        const wasViewingToday = partsToKey(selectedParts) === partsToKey(todayParts);
-        todayParts = newToday;
-        if (wasViewingToday) {
-          selectedParts = { ...todayParts };
-          subscribeSelectedDay();
-        }
-        updateDateUi();
-      }
-    }, 10000);
-    updateDateUi();
+      themeButton.textContent =
+        isLight
 
-    const firebaseConfig = {
-      apiKey:"AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k",
-      authDomain:"decalwebserver.firebaseapp.com",
-      projectId:"decalwebserver",
-      storageBucket:"decalwebserver.firebasestorage.app",
-      messagingSenderId:"331794269229",
-      appId:"1:331794269229:web:32f7be72cc879ff4bb64a4",
-      measurementId:"G-WBJY5N4833",
-      databaseURL:"https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app"
-    };
+          ? "☾ Chế độ tối"
 
-    const totalLabelsEl = document.getElementById("total-labels");
-    const errorLabelsEl = document.getElementById("error-labels");
-    const activeRollLabel = document.getElementById("active-roll-label");
-    const errorRollLabel = document.getElementById("error-roll-label");
-    const defectiveRollCountEl = document.getElementById("defective-roll-count");
-    const rollList = document.getElementById("roll-list");
-    const status = document.getElementById("status");
+          : "☀ Chế độ sáng";
 
-    let database = null;
-    let connected = false;
-    let readError = false;
-
-    function updateStatus(message="") {
-      if (message) { status.textContent = message; return; }
-      status.textContent = readError ? "Không đọc được dữ liệu Firebase." : !connected ? "Đang kết nối lại Firebase…" : " ";
-    }
-    function safeNumber(value) {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : 0;
-    }
-    function validImageUrl(value) {
-      if (typeof value !== "string" || !value.trim()) return null;
-      try {
-        const url = new URL(value);
-        if (url.protocol === "https:" || url.protocol === "http:") return url.href;
-      } catch (_) {}
-      return null;
     }
 
-    /*
-      Schema mới dự kiến:
-      ProductionByDate/
-        2026-11-07/
-          currentRollId: "roll_003"
-          rolls/
-            roll_001/
-              rollNumber: 1
-              totalLabels: 802
-              errorLabels: 2
-              status: "closed"
-              errors/
-                error_001/
-                  position: 120
-                  errorCount: 1
-                  imageUrl: "https://..."
-    */
-
-    function normalizeRolls(dayData) {
-      const source = dayData && dayData.rolls ? dayData.rolls : {};
-      return Object.entries(source)
-        .filter(([,roll]) => roll && typeof roll === "object")
-        .map(([id,roll],index) => {
-          const errorsSource = roll.errors || {};
-          const errors = Object.entries(errorsSource)
-            .filter(([,err]) => err && typeof err === "object")
-            .map(([errorId,err]) => ({
-              id:errorId,
-              position:err.position ?? "—",
-              errorCount:Math.max(1,safeNumber(err.errorCount)),
-              imageUrl:validImageUrl(err.imageUrl),
-              timestamp:safeNumber(err.timestamp)
-            }))
-            .sort((a,b) => a.timestamp-b.timestamp || String(a.position).localeCompare(String(b.position)));
-          return {
-            id,
-            rollNumber:safeNumber(roll.rollNumber) || index+1,
-            totalLabels:safeNumber(roll.totalLabels),
-            errorLabels:safeNumber(roll.errorLabels) || errors.reduce((sum,e) => sum+e.errorCount,0),
-            status:typeof roll.status === "string" ? roll.status : "closed",
-            errors
-          };
-        })
-        .sort((a,b) => a.rollNumber-b.rollNumber);
-    }
-
-    function getActiveRoll(dayData,rolls) {
-      if (!rolls.length) return null;
-      const currentId = dayData && typeof dayData.currentRollId === "string" ? dayData.currentRollId : null;
-      if (currentId) {
-        const current = rolls.find(r => r.id === currentId);
-        if (current) return current;
-      }
-      return rolls[rolls.length-1];
-    }
-
-    function renderRolls(dayData) {
-      const rolls = normalizeRolls(dayData);
-      const activeRoll = getActiveRoll(dayData,rolls);
-      totalLabelsEl.textContent = activeRoll ? activeRoll.totalLabels : 0;
-      errorLabelsEl.textContent = activeRoll ? activeRoll.errorLabels : 0;
-      const caption = activeRoll ? "Cuộn " + activeRoll.rollNumber : "Chưa có cuộn";
-      activeRollLabel.textContent = caption;
-      errorRollLabel.textContent = caption;
-
-      const defectiveRolls = rolls.filter(r => r.errorLabels > 0);
-      defectiveRollCountEl.textContent = defectiveRolls.length;
-      rollList.replaceChildren();
-
-      if (!defectiveRolls.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "Ngày này chưa có cuộn lỗi.";
-        rollList.appendChild(empty);
-        return;
-      }
-
-      defectiveRolls.forEach((roll,index) => {
-        const details = document.createElement("details");
-        details.className = "roll-item";
-        const summary = document.createElement("summary");
-        summary.className = "roll-summary";
-        summary.textContent = "Cuộn lỗi thứ " + (index+1) + ": " + roll.errorLabels + " nhãn lỗi";
-        const list = document.createElement("ul");
-        list.className = "error-list";
-
-        if (!roll.errors.length) {
-          const row = document.createElement("li");
-          row.className = "empty";
-          row.textContent = "Cuộn này có lỗi nhưng chưa có chi tiết vị trí.";
-          list.appendChild(row);
-        }
-
-        roll.errors.forEach(error => {
-          const row = document.createElement("li");
-          row.className = "error-row";
-          const position = document.createElement("span");
-          position.className = "error-position";
-          position.textContent = "Vị trí: " + error.position;
-          const count = document.createElement("span");
-          count.className = "error-count";
-          count.textContent = error.errorCount + " lỗi";
-          row.appendChild(position);
-          row.appendChild(count);
-
-          if (error.imageUrl) {
-            const link = document.createElement("a");
-            link.className = "check-link";
-            link.href = error.imageUrl;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = "Check";
-            row.appendChild(link);
-          } else {
-            const noImage = document.createElement("span");
-            noImage.className = "check-disabled";
-            noImage.textContent = "Chưa có ảnh";
-            row.appendChild(noImage);
-          }
-
-          list.appendChild(row);
-        });
-
-        details.appendChild(summary);
-        details.appendChild(list);
-        rollList.appendChild(details);
-      });
-    }
-
-    // Tạm tương thích dữ liệu cũ ProductionData trong lúc chưa đổi App/C++.
-    function renderLegacyProductionData(data) {
-      const source = (data && data.errorPositions) || {};
-      const errors = Object.entries(source)
-        .filter(([,item]) => item && typeof item === "object")
-        .map(([id,item]) => ({
-          id,
-          position:item.position ?? "—",
-          errorCount:Math.max(1,safeNumber(item.errorCount)),
-          imageUrl:item.imageUrl || "",
-          timestamp:safeNumber(item.timestamp)
-        }));
-      const errorLabels = errors.reduce((sum,item) => sum+item.errorCount,0);
-      renderRolls({
-        currentRollId:"legacy_current",
-        rolls:{
-          legacy_current:{
-            rollNumber:1,
-            totalLabels:safeNumber(data.totalPackages),
-            errorLabels,
-            status:"running",
-            errors:Object.fromEntries(errors.map(item => [item.id,item]))
-          }
-        }
-      });
-    }
-
-    function detachDayListeners() {
-      if (selectedDateRef) { selectedDateRef.off(); selectedDateRef = null; }
-      if (legacyRef) { legacyRef.off(); legacyRef = null; }
-    }
-
-    function subscribeSelectedDay() {
-      if (!database) return;
-      detachDayListeners();
-      const dateKey = partsToKey(selectedParts);
-      status.textContent = "Đang tải " + partsToDisplay(selectedParts) + "…";
-      selectedDateRef = database.ref("ProductionByDate/" + dateKey);
-
-      selectedDateRef.on("value", snapshot => {
-        readError = false;
-        if (snapshot.exists()) {
-          renderRolls(snapshot.val() || {});
-          updateStatus();
-          return;
-        }
-
-        // Trong giai đoạn chuyển schema: ngày hiện tại fallback ProductionData cũ.
-        if (dateKey === partsToKey(todayParts)) {
-          legacyRef = database.ref("ProductionData");
-          legacyRef.once("value", legacySnapshot => {
-            if (legacySnapshot.exists()) renderLegacyProductionData(legacySnapshot.val() || {});
-            else renderRolls({});
-            updateStatus();
-          }, () => {
-            renderRolls({});
-            updateStatus();
-          });
-        } else {
-          renderRolls({});
-          updateStatus();
-        }
-      }, error => {
-        readError = true;
-        renderRolls({});
-        updateStatus("Không đọc được dữ liệu: " + (error.code || "Firebase error"));
-      });
-    }
+    let savedTheme =
+      "dark";
 
     try {
-      firebase.initializeApp(firebaseConfig);
-      database = firebase.database();
-      database.ref(".info/connected").on("value", snapshot => {
-        connected = snapshot.val() === true;
-        updateStatus();
-      });
-      subscribeSelectedDay();
-    } catch (error) {
-      readError = true;
-      renderRolls({});
-      updateStatus("Không khởi tạo được Firebase.");
-      console.error(error);
+
+      savedTheme =
+        localStorage.getItem(
+          "production-theme"
+        )
+        ||
+        "dark";
+
     }
+    catch (_) {
+    }
+
+    applyTheme(
+      savedTheme === "light"
+    );
+
+    themeButton.addEventListener(
+      "click",
+      () => {
+
+        const isLight =
+          !document.body
+            .classList
+            .contains(
+              "light"
+            );
+
+        applyTheme(
+          isLight
+        );
+
+        try {
+
+          localStorage.setItem(
+            "production-theme",
+            isLight
+              ? "light"
+              : "dark"
+          );
+
+        }
+        catch (_) {
+        }
+
+      }
+    );
+
+    // ================================================================
+    // DATE
+    // ================================================================
+
+    const selectedDateElement =
+      document.getElementById(
+        "selected-date"
+      );
+
+    const prevDayButton =
+      document.getElementById(
+        "prev-day"
+      );
+
+    const nextDayButton =
+      document.getElementById(
+        "next-day"
+      );
+
+    function getVietnamDateParts(
+      date = new Date()
+    ) {
+
+      const parts =
+        new Intl.DateTimeFormat(
+          "en-CA",
+          {
+            timeZone:
+              "Asia/Ho_Chi_Minh",
+
+            year:
+              "numeric",
+
+            month:
+              "2-digit",
+
+            day:
+              "2-digit"
+          }
+        )
+        .formatToParts(
+          date
+        );
+
+      const get =
+        type =>
+          parts.find(
+            part =>
+              part.type
+              ===
+              type
+          ).value;
+
+      return {
+
+        year:
+          Number(
+            get(
+              "year"
+            )
+          ),
+
+        month:
+          Number(
+            get(
+              "month"
+            )
+          ),
+
+        day:
+          Number(
+            get(
+              "day"
+            )
+          )
+
+      };
+
+    }
+
+    function dateToKey(
+      date
+    ) {
+
+      return (
+
+        String(
+          date.year
+        )
+        .padStart(
+          4,
+          "0"
+        )
+
+        + "-"
+
+        + String(
+          date.month
+        )
+        .padStart(
+          2,
+          "0"
+        )
+
+        + "-"
+
+        + String(
+          date.day
+        )
+        .padStart(
+          2,
+          "0"
+        )
+
+      );
+
+    }
+
+    function dateToDisplay(
+      date
+    ) {
+
+      return (
+
+        String(
+          date.day
+        )
+        .padStart(
+          2,
+          "0"
+        )
+
+        + "/"
+
+        + String(
+          date.month
+        )
+        .padStart(
+          2,
+          "0"
+        )
+
+        + "/"
+
+        + String(
+          date.year
+        )
+        .padStart(
+          4,
+          "0"
+        )
+
+      );
+
+    }
+
+    function shiftDate(
+      date,
+      amount
+    ) {
+
+      const value =
+        new Date(
+          Date.UTC(
+            date.year,
+            date.month - 1,
+            date.day + amount,
+            12
+          )
+        );
+
+      return {
+
+        year:
+          value.getUTCFullYear(),
+
+        month:
+          value.getUTCMonth() + 1,
+
+        day:
+          value.getUTCDate()
+
+      };
+
+    }
+
+    function compareDate(
+      first,
+      second
+    ) {
+
+      return dateToKey(
+        first
+      )
+      .localeCompare(
+        dateToKey(
+          second
+        )
+      );
+
+    }
+
+    let today =
+      getVietnamDateParts();
+
+    let selectedDate = {
+      ...today
+    };
+
+    function updateDateControls() {
+
+      selectedDateElement.textContent =
+        dateToDisplay(
+          selectedDate
+        );
+
+      nextDayButton.disabled =
+        compareDate(
+          selectedDate,
+          today
+        )
+        >=
+        0;
+
+    }
+
+    prevDayButton.addEventListener(
+      "click",
+      () => {
+
+        selectedDate =
+          shiftDate(
+            selectedDate,
+            -1
+          );
+
+        updateDateControls();
+
+        subscribeSelectedDate();
+
+      }
+    );
+
+    nextDayButton.addEventListener(
+      "click",
+      () => {
+
+        if (
+          nextDayButton.disabled
+        ) {
+
+          return;
+
+        }
+
+        selectedDate =
+          shiftDate(
+            selectedDate,
+            1
+          );
+
+        if (
+          compareDate(
+            selectedDate,
+            today
+          )
+          >
+          0
+        ) {
+
+          selectedDate = {
+            ...today
+          };
+
+        }
+
+        updateDateControls();
+
+        subscribeSelectedDate();
+
+      }
+    );
+
+    // ================================================================
+    // MIDNIGHT
+    // ================================================================
+
+    setInterval(
+      () => {
+
+        const newToday =
+          getVietnamDateParts();
+
+        if (
+          dateToKey(
+            newToday
+          )
+          !==
+          dateToKey(
+            today
+          )
+        ) {
+
+          const viewingToday =
+            dateToKey(
+              selectedDate
+            )
+            ===
+            dateToKey(
+              today
+            );
+
+          today =
+            newToday;
+
+          if (
+            viewingToday
+          ) {
+
+            selectedDate = {
+              ...today
+            };
+
+            subscribeSelectedDate();
+
+          }
+
+          updateDateControls();
+
+        }
+
+      },
+      10000
+    );
+
+    updateDateControls();
+
+    // ================================================================
+    // FIREBASE
+    // ================================================================
+
+    const firebaseConfig = {
+
+      apiKey:
+        "AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k",
+
+      authDomain:
+        "decalwebserver.firebaseapp.com",
+
+      projectId:
+        "decalwebserver",
+
+      storageBucket:
+        "decalwebserver.firebasestorage.app",
+
+      messagingSenderId:
+        "331794269229",
+
+      appId:
+        "1:331794269229:web:32f7be72cc879ff4bb64a4",
+
+      measurementId:
+        "G-WBJY5N4833",
+
+      databaseURL:
+        "https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app"
+
+    };
+
+    firebase.initializeApp(
+      firebaseConfig
+    );
+
+    const database =
+      firebase.database();
+
+    // ================================================================
+    // UI ELEMENTS
+    // ================================================================
+
+    const currentTotalElement =
+      document.getElementById(
+        "current-total"
+      );
+
+    const currentErrorElement =
+      document.getElementById(
+        "current-error-total"
+      );
+
+    const currentRollCaption =
+      document.getElementById(
+        "current-roll-caption"
+      );
+
+    const currentErrorCaption =
+      document.getElementById(
+        "current-error-caption"
+      );
+
+    const totalRollCountElement =
+      document.getElementById(
+        "total-roll-count"
+      );
+
+    const errorRollCountElement =
+      document.getElementById(
+        "error-roll-count"
+      );
+
+    const rollManagementList =
+      document.getElementById(
+        "roll-management-list"
+      );
+
+    const errorRollList =
+      document.getElementById(
+        "error-roll-list"
+      );
+
+    const statusElement =
+      document.getElementById(
+        "status"
+      );
+
+    let selectedDateReference =
+      null;
+
+    // ================================================================
+    // HELPERS
+    // ================================================================
+
+    function safeNumber(
+      value
+    ) {
+
+      const number =
+        Number(
+          value
+        );
+
+      return Number.isFinite(
+        number
+      )
+        ? number
+        : 0;
+
+    }
+
+    function formatTime(
+      value
+    ) {
+
+      const timestamp =
+        Number(
+          value
+        );
+
+      if (
+        !Number.isFinite(
+          timestamp
+        )
+        ||
+        timestamp <= 0
+      ) {
+
+        return "--:--:--";
+
+      }
+
+      return new Intl.DateTimeFormat(
+        "vi-VN",
+        {
+          timeZone:
+            "Asia/Ho_Chi_Minh",
+
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit",
+
+          second:
+            "2-digit",
+
+          hour12:
+            false
+        }
+      )
+      .format(
+        new Date(
+          timestamp
+        )
+      );
+
+    }
+
+    function validImageUrl(
+      value
+    ) {
+
+      if (
+        typeof value
+        !==
+        "string"
+        ||
+        !value.trim()
+      ) {
+
+        return null;
+
+      }
+
+      try {
+
+        const url =
+          new URL(
+            value
+          );
+
+        if (
+          url.protocol
+          ===
+          "http:"
+          ||
+          url.protocol
+          ===
+          "https:"
+        ) {
+
+          return url.href;
+
+        }
+
+      }
+      catch (_) {
+      }
+
+      return null;
+
+    }
+
+    // ================================================================
+    // NORMALIZE ROLLS
+    // ================================================================
+
+    function normalizeRolls(
+      data
+    ) {
+
+      const source =
+        data
+        &&
+        data.rolls
+
+          ? data.rolls
+
+          : {};
+
+      return Object.entries(
+        source
+      )
+
+      .filter(
+        ([, roll]) =>
+          roll
+          &&
+          typeof roll
+            ===
+            "object"
+      )
+
+      .map(
+        (
+          [id, roll],
+          index
+        ) => ({
+
+          id,
+
+          rollNumber:
+            safeNumber(
+              roll.rollNumber
+            )
+            ||
+            index + 1,
+
+          totalLabels:
+            safeNumber(
+              roll.totalLabels
+            ),
+
+          startTime:
+            safeNumber(
+              roll.startTime
+            ),
+
+          endTime:
+            safeNumber(
+              roll.endTime
+            ),
+
+          status:
+            typeof roll.status
+              ===
+              "string"
+
+              ? roll.status
+
+              : "closed"
+
+        })
+      )
+
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.rollNumber
+          -
+          b.rollNumber
+      );
+
+    }
+
+    // ================================================================
+    // NORMALIZE ERROR ROLLS
+    //
+    // ERROR ROLLS HOÀN TOÀN ĐỘC LẬP
+    // VỚI QUẢN LÝ CUỘN.
+    // ================================================================
+
+    function normalizeErrorRolls(
+      data
+    ) {
+
+      const source =
+        data
+        &&
+        data.errorRolls
+
+          ? data.errorRolls
+
+          : {};
+
+      return Object.entries(
+        source
+      )
+
+      .filter(
+        ([, errorRoll]) =>
+          errorRoll
+          &&
+          typeof errorRoll
+            ===
+            "object"
+      )
+
+      .map(
+        (
+          [id, errorRoll],
+          index
+        ) => {
+
+          const errorsSource =
+            errorRoll.errors
+            ||
+            {};
+
+          const errors =
+            Object.entries(
+              errorsSource
+            )
+
+            .filter(
+              ([, error]) =>
+                error
+                &&
+                typeof error
+                  ===
+                  "object"
+            )
+
+            .map(
+              (
+                [errorId, error]
+              ) => ({
+
+                id:
+                  errorId,
+
+                position:
+                  error.position
+                  ??
+                  "—",
+
+                errorCount:
+                  Math.max(
+                    1,
+                    safeNumber(
+                      error.errorCount
+                    )
+                  ),
+
+                imageUrl:
+                  validImageUrl(
+                    error.imageUrl
+                  ),
+
+                timestamp:
+                  safeNumber(
+                    error.timestamp
+                  )
+
+              })
+            )
+
+            .sort(
+              (
+                a,
+                b
+              ) =>
+
+                a.timestamp
+                -
+                b.timestamp
+
+            );
+
+          return {
+
+            id,
+
+            errorRollNumber:
+              safeNumber(
+                errorRoll.errorRollNumber
+              )
+              ||
+              index + 1,
+
+            errors
+
+          };
+
+        }
+      )
+
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          a.errorRollNumber
+          -
+          b.errorRollNumber
+      );
+
+    }
+
+    // ================================================================
+    // CURRENT ROLL
+    // ================================================================
+
+    function getCurrentRoll(
+      data,
+      rolls
+    ) {
+
+      if (
+        !rolls.length
+      ) {
+
+        return null;
+
+      }
+
+      if (
+        data
+        &&
+        typeof data.currentRollId
+          ===
+          "string"
+      ) {
+
+        const found =
+          rolls.find(
+            roll =>
+              roll.id
+              ===
+              data.currentRollId
+          );
+
+        if (
+          found
+        ) {
+
+          return found;
+
+        }
+
+      }
+
+      return rolls[
+        rolls.length - 1
+      ];
+
+    }
+
+    // ================================================================
+    // RENDER ROLL MANAGEMENT
+    // ================================================================
+
+    function renderRollManagement(
+      rolls
+    ) {
+
+      totalRollCountElement.textContent =
+        rolls.length;
+
+      rollManagementList.replaceChildren();
+
+      if (
+        !rolls.length
+      ) {
+
+        const empty =
+          document.createElement(
+            "div"
+          );
+
+        empty.className =
+          "empty";
+
+        empty.textContent =
+          "Ngày này chưa có cuộn sản xuất.";
+
+        rollManagementList.appendChild(
+          empty
+        );
+
+        return;
+
+      }
+
+      rolls.forEach(
+        roll => {
+
+          const row =
+            document.createElement(
+              "div"
+            );
+
+          row.className =
+            "roll-row";
+
+          const name =
+            document.createElement(
+              "div"
+            );
+
+          name.className =
+            "roll-name";
+
+          name.textContent =
+            "Cuộn "
+            +
+            roll.rollNumber;
+
+          const total =
+            document.createElement(
+              "div"
+            );
+
+          total.className =
+            "roll-total";
+
+          total.textContent =
+            roll.totalLabels
+            +
+            " nhãn";
+
+          const time =
+            document.createElement(
+              "div"
+            );
+
+          time.className =
+            "roll-time";
+
+          const startText =
+            formatTime(
+              roll.startTime
+            );
+
+          if (
+            roll.status
+            ===
+            "running"
+            ||
+            !roll.endTime
+          ) {
+
+            time.innerHTML =
+              startText
+              +
+              " → "
+              +
+              '<span class="roll-running">'
+              +
+              "Đang chạy"
+              +
+              "</span>";
+
+          }
+          else {
+
+            time.textContent =
+              startText
+              +
+              " → "
+              +
+              formatTime(
+                roll.endTime
+              );
+
+          }
+
+          row.appendChild(
+            name
+          );
+
+          row.appendChild(
+            total
+          );
+
+          row.appendChild(
+            time
+          );
+
+          rollManagementList.appendChild(
+            row
+          );
+
+        }
+      );
+
+    }
+
+    // ================================================================
+    // RENDER ERROR ROLLS
+    // ================================================================
+
+    function renderErrorRolls(
+      errorRolls
+    ) {
+
+      errorRollCountElement.textContent =
+        errorRolls.length;
+
+      errorRollList.replaceChildren();
+
+      if (
+        !errorRolls.length
+      ) {
+
+        const empty =
+          document.createElement(
+            "div"
+          );
+
+        empty.className =
+          "empty";
+
+        empty.textContent =
+          "Ngày này chưa ghi nhận cuộn lỗi.";
+
+        errorRollList.appendChild(
+          empty
+        );
+
+        return;
+
+      }
+
+      errorRolls.forEach(
+        errorRoll => {
+
+          const details =
+            document.createElement(
+              "details"
+            );
+
+          details.className =
+            "error-roll";
+
+          const summary =
+            document.createElement(
+              "summary"
+            );
+
+          summary.className =
+            "error-roll-summary";
+
+          summary.textContent =
+            "Cuộn lỗi "
+            +
+            errorRoll.errorRollNumber;
+
+          const list =
+            document.createElement(
+              "ul"
+            );
+
+          list.className =
+            "error-list";
+
+          if (
+            !errorRoll.errors.length
+          ) {
+
+            const empty =
+              document.createElement(
+                "li"
+              );
+
+            empty.className =
+              "empty";
+
+            empty.textContent =
+              "Chưa có chi tiết lỗi.";
+
+            list.appendChild(
+              empty
+            );
+
+          }
+
+          errorRoll.errors.forEach(
+            error => {
+
+              const row =
+                document.createElement(
+                  "li"
+                );
+
+              row.className =
+                "error-row";
+
+              const position =
+                document.createElement(
+                  "span"
+                );
+
+              position.className =
+                "error-position";
+
+              position.textContent =
+                "Vị trí: "
+                +
+                error.position;
+
+              const count =
+                document.createElement(
+                  "span"
+                );
+
+              count.className =
+                "error-count";
+
+              count.textContent =
+                error.errorCount
+                +
+                " lỗi";
+
+              row.appendChild(
+                position
+              );
+
+              row.appendChild(
+                count
+              );
+
+              if (
+                error.imageUrl
+              ) {
+
+                const link =
+                  document.createElement(
+                    "a"
+                  );
+
+                link.className =
+                  "check-link";
+
+                link.href =
+                  error.imageUrl;
+
+                link.target =
+                  "_blank";
+
+                link.rel =
+                  "noopener noreferrer";
+
+                link.textContent =
+                  "Check";
+
+                row.appendChild(
+                  link
+                );
+
+              }
+              else {
+
+                const noImage =
+                  document.createElement(
+                    "span"
+                  );
+
+                noImage.className =
+                  "check-disabled";
+
+                noImage.textContent =
+                  "Chưa có ảnh";
+
+                row.appendChild(
+                  noImage
+                );
+
+              }
+
+              list.appendChild(
+                row
+              );
+
+            }
+          );
+
+          details.appendChild(
+            summary
+          );
+
+          details.appendChild(
+            list
+          );
+
+          errorRollList.appendChild(
+            details
+          );
+
+        }
+      );
+
+    }
+
+    // ================================================================
+    // RENDER CURRENT ROLL SUMMARY
+    // ================================================================
+
+    function renderCurrentRoll(
+      data,
+      rolls
+    ) {
+
+      const currentRoll =
+        getCurrentRoll(
+          data,
+          rolls
+        );
+
+      if (
+        !currentRoll
+      ) {
+
+        currentTotalElement.textContent =
+          0;
+
+        currentErrorElement.textContent =
+          0;
+
+        currentRollCaption.textContent =
+          "Chưa có cuộn";
+
+        currentErrorCaption.textContent =
+          "Chưa có cuộn";
+
+        return;
+
+      }
+
+      currentTotalElement.textContent =
+        currentRoll.totalLabels;
+
+      currentRollCaption.textContent =
+        "Cuộn "
+        +
+        currentRoll.rollNumber;
+
+      currentErrorCaption.textContent =
+        "Cuộn "
+        +
+        currentRoll.rollNumber;
+
+      /*
+       * errorLabelsCurrentRoll
+       * sẽ được App/C++ cập nhật sau.
+       *
+       * Nếu chưa có thì mặc định 0.
+       */
+
+      currentErrorElement.textContent =
+        safeNumber(
+          data.currentErrorLabels
+        );
+
+    }
+
+    // ================================================================
+    // MAIN RENDER
+    // ================================================================
+
+    function renderData(
+      data
+    ) {
+
+      const rolls =
+        normalizeRolls(
+          data
+        );
+
+      const errorRolls =
+        normalizeErrorRolls(
+          data
+        );
+
+      renderCurrentRoll(
+        data,
+        rolls
+      );
+
+      renderRollManagement(
+        rolls
+      );
+
+      renderErrorRolls(
+        errorRolls
+      );
+
+    }
+
+    // ================================================================
+    // LEGACY DATABASE
+    //
+    // Tạm thời dùng ProductionData hiện tại
+    // để giao diện vẫn có dữ liệu trước khi
+    // App được sửa sang schema mới.
+    // ================================================================
+
+    function renderLegacyData(
+      legacy
+    ) {
+
+      const oldErrors =
+        legacy.errorPositions
+        ||
+        {};
+
+      const errorItems =
+        Object.entries(
+          oldErrors
+        );
+
+      const mappedErrors =
+        {};
+
+      let index =
+        1;
+
+      let errorTotal =
+        0;
+
+      errorItems.forEach(
+        (
+          [key, item]
+        ) => {
+
+          if (
+            !item
+            ||
+            typeof item
+              !==
+              "object"
+          ) {
+
+            return;
+
+          }
+
+          const count =
+            Math.max(
+              1,
+              safeNumber(
+                item.errorCount
+              )
+            );
+
+          errorTotal +=
+            count;
+
+          mappedErrors[
+            "error_"
+            +
+            index
+          ] = {
+
+            position:
+              item.position
+              ??
+              key,
+
+            errorCount:
+              count,
+
+            imageUrl:
+              item.imageUrl
+              ||
+              "",
+
+            timestamp:
+              safeNumber(
+                item.timestamp
+              )
+
+          };
+
+          index++;
+
+        }
+      );
+
+      const legacyData = {
+
+        currentRollId:
+          "roll_001",
+
+        currentErrorLabels:
+          errorTotal,
+
+        rolls: {
+
+          roll_001: {
+
+            rollNumber:
+              1,
+
+            totalLabels:
+              safeNumber(
+                legacy.totalPackages
+              ),
+
+            startTime:
+              0,
+
+            endTime:
+              0,
+
+            status:
+              "running"
+
+          }
+
+        },
+
+        errorRolls:
+          errorTotal > 0
+
+            ? {
+
+                errorRoll_001: {
+
+                  errorRollNumber:
+                    1,
+
+                  errors:
+                    mappedErrors
+
+                }
+
+              }
+
+            : {}
+
+      };
+
+      renderData(
+        legacyData
+      );
+
+    }
+
+    // ================================================================
+    // SUBSCRIBE DATE
+    // ================================================================
+
+    function subscribeSelectedDate() {
+
+      if (
+        selectedDateReference
+      ) {
+
+        selectedDateReference.off();
+
+      }
+
+      const dateKey =
+        dateToKey(
+          selectedDate
+        );
+
+      statusElement.textContent =
+        "Đang tải dữ liệu "
+        +
+        dateToDisplay(
+          selectedDate
+        )
+        +
+        "…";
+
+      selectedDateReference =
+        database.ref(
+          "ProductionByDate/"
+          +
+          dateKey
+        );
+
+      selectedDateReference.on(
+
+        "value",
+
+        snapshot => {
+
+          // ==========================================================
+          // NEW DATABASE
+          // ==========================================================
+
+          if (
+            snapshot.exists()
+          ) {
+
+            renderData(
+              snapshot.val()
+              ||
+              {}
+            );
+
+            statusElement.textContent =
+              "";
+
+            return;
+
+          }
+
+          // ==========================================================
+          // LEGACY DATABASE
+          //
+          // Chỉ fallback khi đang xem hôm nay.
+          // ==========================================================
+
+          if (
+            dateKey
+            ===
+            dateToKey(
+              today
+            )
+          ) {
+
+            database
+              .ref(
+                "ProductionData"
+              )
+              .once(
+                "value",
+
+                legacySnapshot => {
+
+                  if (
+                    legacySnapshot.exists()
+                  ) {
+
+                    renderLegacyData(
+                      legacySnapshot.val()
+                      ||
+                      {}
+                    );
+
+                  }
+                  else {
+
+                    renderData(
+                      {}
+                    );
+
+                  }
+
+                  statusElement.textContent =
+                    "";
+
+                }
+              );
+
+          }
+          else {
+
+            renderData(
+              {}
+            );
+
+            statusElement.textContent =
+              "";
+
+          }
+
+        },
+
+        error => {
+
+          console.error(
+            error
+          );
+
+          renderData(
+            {}
+          );
+
+          statusElement.textContent =
+            "Không đọc được dữ liệu Firebase.";
+
+        }
+
+      );
+
+    }
+
+    // ================================================================
+    // FIREBASE CONNECTION STATUS
+    // ================================================================
+
+    database
+      .ref(
+        ".info/connected"
+      )
+      .on(
+        "value",
+        snapshot => {
+
+          if (
+            snapshot.val()
+            !==
+            true
+          ) {
+
+            statusElement.textContent =
+              "Đang kết nối lại Firebase…";
+
+          }
+
+        }
+      );
+
+    // ================================================================
+    // START
+    // ================================================================
+
+    subscribeSelectedDate();
+
   </script>
+
 </body>
 </html>
