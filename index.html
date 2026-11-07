@@ -3,217 +3,435 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Giám sát bao bì thời gian thực</title>
+  <title>Quản lý sản xuất decal theo cuộn</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 24px; background: #232728; color: #c4ddff; font-family: 'Segoe UI', Arial, sans-serif; }
-    .topbar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 20px; }
-    .theme-toggle { padding: 12px 16px; border: 1px solid #3d484f; border-radius: 10px; background: #111; color: #c4ddff; font: 600 14px "Segoe UI", Arial, sans-serif; cursor: pointer; }
-    .theme-toggle:focus-visible { outline: 2px solid #ffa337; outline-offset: 3px; }
-    .clock { width: fit-content; margin: 0; padding: 10px 16px; border: 1px solid #3d484f; border-radius: 10px; background: #111; text-align: right; }
-    .clock-label { font-size: 11px; color: #859da9; }
-    #time { margin: 4px 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    #date { font-size: 13px; color: #a3b5bf; }
-    .container { max-width: 860px; margin: 0 auto; text-align: center; }
-    h2 { margin: 0 0 32px; font-size: clamp(24px, 4vw, 36px); }
-    .dashboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0 0 30px; }
-    .card { padding: 28px 20px; background: #111; border-radius: 12px; }
-    .card h4 { margin: 0 0 12px; font-size: 14px; color: #859da9; text-transform: uppercase; }
-    .number { font-size: 40px; font-weight: 700; }
-    .error .number { color: #ef4438; }
-    .positions-panel { padding: 24px; background: #111; border-radius: 12px; text-align: left; }
-    details { border: 1px solid #de820e; border-radius: 6px; overflow: hidden; }
-    summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; font-size: 20px; font-weight: 700; background: #21190f; color: #ffa337; cursor: pointer; list-style: none; }
-    summary::-webkit-details-marker { display: none; }
-    summary::after { content: ''; width: 15px; height: 15px; border-right: 3px solid; border-bottom: 3px solid; transform: rotate(45deg); flex-shrink: 0; margin: 0 4px 7px; }
-    details[open] summary { border-bottom: 1px solid #de820e; }
-    details[open] summary::after { transform: rotate(225deg); margin-bottom: -7px; }
-    summary:focus-visible { outline: 3px solid #2878d0; outline-offset: 4px; }
-    #position { min-height: 280px; max-height: 400px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
-    #position li { padding: 16px 18px; border-bottom: 1px solid #303537; font-size: 18px; overflow-wrap: anywhere; }
-    #position li:last-child { border-bottom: 0; }
-    #position .empty { color: #a3b5bf; text-align: center; padding-top: 60px; }
-    .latest { color: #ffa337; font-weight: 700; }
-    #status { margin: 20px 0; color: #a3b5bf; font-size: 14px; }
-    @media (max-width: 500px) { body { padding: 16px; } .positions-panel { padding: 16px; border-radius: 12px; } summary { font-size: 21px; } .card { padding: 20px 8px; } }
-    body.light { background: #eef2f5; color: #2c3e50; color-scheme: light; }
-    body:not(.light) { color-scheme: dark; }
-    body.light .clock, body.light .theme-toggle, body.light .card, body.light .positions-panel { background: #fff; }
-    body.light .clock, body.light .theme-toggle { border-color: #ccd5dd; }
-    body.light .theme-toggle { color: #2c3e50; }
-    body.light .clock-label, body.light .card h4 { color: #667783; }
-    body.light #date, body.light #status, body.light #position .empty { color: #667783; }
-    body.light summary { background: #fff8f0; color: #a85200; }
-    body.light #position li { border-bottom-color: #e0e6eb; }
-    body.light .latest { color: #a85200; }
-    @media (max-width: 380px) { .topbar { gap: 8px; } .theme-toggle { padding: 10px; } .clock { padding: 10px; } }
+    :root {
+      --bg:#232728; --panel:#111; --panel-soft:#191d1f; --text:#c4ddff;
+      --muted:#859da9; --border:#3d484f; --accent:#ffa337;
+      --accent-dark:#de820e; --danger:#ef4438;
+    }
+    body { margin:0; padding:24px; background:var(--bg); color:var(--text); font-family:"Segoe UI",Arial,sans-serif; }
+    button { font:inherit; }
+    .topbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
+    .theme-toggle { padding:11px 15px; border:1px solid var(--border); border-radius:10px; background:var(--panel); color:var(--text); font-weight:600; cursor:pointer; }
+    .container { max-width:980px; margin:0 auto; }
+    .date-navigation { display:flex; justify-content:center; align-items:center; gap:14px; margin:2px 0 18px; }
+    .date-button { min-width:58px; height:42px; border:1px solid var(--border); border-radius:10px; background:var(--panel); color:var(--text); font-size:22px; font-weight:700; cursor:pointer; }
+    .date-button:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+    .date-button:disabled { opacity:.35; cursor:not-allowed; }
+    .date-value { min-width:190px; padding:8px 18px; text-align:center; font-size:21px; font-weight:800; font-variant-numeric:tabular-nums; }
+    h2 { margin:0 0 30px; text-align:center; font-size:clamp(25px,4vw,36px); }
+    .dashboard { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-bottom:26px; }
+    .card { min-height:135px; padding:26px 20px; border-radius:14px; background:var(--panel); text-align:center; }
+    .card h4 { margin:0 0 14px; color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.5px; }
+    .number { font-size:42px; font-weight:800; font-variant-numeric:tabular-nums; }
+    .error-card .number { color:var(--danger); }
+    .roll-caption { margin-top:6px; color:var(--muted); font-size:12px; }
+    .rolls-panel { padding:22px; border-radius:14px; background:var(--panel); }
+    details { overflow:hidden; border:1px solid var(--accent-dark); border-radius:8px; }
+    summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; list-style:none; cursor:pointer; user-select:none; }
+    summary::-webkit-details-marker { display:none; }
+    summary::after { content:""; width:13px; height:13px; border-right:3px solid currentColor; border-bottom:3px solid currentColor; transform:rotate(45deg); transition:transform .18s ease; flex-shrink:0; margin-right:4px; margin-bottom:6px; }
+    details[open] > summary::after { transform:rotate(225deg); margin-bottom:-5px; }
+    .rolls-summary { background:#21190f; color:var(--accent); font-size:20px; font-weight:800; }
+    .roll-list { display:grid; gap:10px; padding:12px; max-height:470px; overflow-y:auto; }
+    .roll-item { border-color:#46515a; background:var(--panel-soft); }
+    .roll-summary { padding:13px 16px; color:var(--text); background:#171b1d; font-size:16px; font-weight:700; }
+    .error-list { margin:0; padding:0; list-style:none; background:var(--panel); }
+    .error-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(100px,.8fr) 90px; align-items:center; gap:12px; padding:13px 16px; border-top:1px solid #303537; font-size:15px; }
+    .check-link { justify-self:end; padding:6px 12px; border:1px solid var(--accent-dark); border-radius:7px; color:var(--accent); text-decoration:none; font-weight:700; }
+    .check-link:hover { background:#2a1e10; }
+    .check-disabled { justify-self:end; color:var(--muted); font-size:13px; }
+    .empty { padding:52px 20px; text-align:center; color:var(--muted); }
+    #status { min-height:20px; margin:16px 0 0; text-align:center; color:var(--muted); font-size:13px; }
+    body.light { --bg:#eef2f5; --panel:#fff; --panel-soft:#f8fafb; --text:#2c3e50; --muted:#667783; --border:#ccd5dd; color-scheme:light; }
+    body:not(.light) { color-scheme:dark; }
+    body.light .rolls-summary { background:#fff8f0; color:#a85200; }
+    body.light .roll-summary { background:#f4f7f9; }
+    body.light .check-link { color:#a85200; }
+    body.light .check-link:hover { background:#fff6ec; }
+    body.light .error-row { border-top-color:#e0e6eb; }
+    @media (max-width:650px) {
+      body { padding:14px; }
+      .dashboard { grid-template-columns:1fr; }
+      .date-navigation { gap:8px; }
+      .date-value { min-width:150px; font-size:18px; }
+      .date-button { min-width:48px; }
+      .rolls-panel { padding:14px; }
+      .error-row { grid-template-columns:1fr auto; }
+      .error-count { grid-column:1 / 2; }
+      .check-link,.check-disabled { grid-column:2; grid-row:1 / span 2; }
+    }
   </style>
 </head>
 <body>
   <div class="topbar">
-  <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Bật chế độ sáng">☀ Chế độ sáng</button>
-  <aside class="clock" aria-label="Đồng hồ giờ Việt Nam">
-    <div class="clock-label">THỜI GIAN HIỆN TẠI · VIỆT NAM</div>
-    <div id="time">--:--:--</div>
-    <div id="date">--/--/----</div>
-  </aside>
+    <button id="theme-toggle" class="theme-toggle" type="button">☀ Chế độ sáng</button>
   </div>
+
   <main class="container">
-    <h2>QUẢN LÝ SẢN XUẤT BAO BÌ</h2>
-    <div class="dashboard">
-      <div class="card"><h4>Số lượng</h4><div id="total" class="number">—</div></div>
-      <div class="card error"><h4>Số nhãn lỗi</h4><div id="errors" class="number">—</div></div>
+    <div class="date-navigation" aria-label="Chọn ngày sản xuất">
+      <button id="prev-day" class="date-button" type="button" title="Ngày trước">&lt;&lt;</button>
+      <div id="selected-date" class="date-value">--/--/----</div>
+      <button id="next-day" class="date-button" type="button" title="Ngày sau">&gt;&gt;</button>
     </div>
-    <section class="positions-panel" aria-label="Danh sách vị trí lỗi">
+
+    <h2>QUẢN LÝ SẢN XUẤT BAO BÌ</h2>
+
+    <section class="dashboard">
+      <div class="card">
+        <h4>Tổng nhãn của cuộn</h4>
+        <div id="total-labels" class="number">0</div>
+        <div id="active-roll-label" class="roll-caption">Chưa có cuộn</div>
+      </div>
+      <div class="card error-card">
+        <h4>Số nhãn lỗi của cuộn</h4>
+        <div id="error-labels" class="number">0</div>
+        <div id="error-roll-label" class="roll-caption">Chưa có cuộn</div>
+      </div>
+    </section>
+
+    <section class="rolls-panel">
       <details open>
-        <summary>Vị trí lỗi</summary>
-        <ul id="position" aria-live="polite"><li class="empty">Đang tải dữ liệu…</li></ul>
+        <summary class="rolls-summary">
+          <span>Số cuộn lỗi: <strong id="defective-roll-count">0</strong></span>
+        </summary>
+        <div id="roll-list" class="roll-list">
+          <div class="empty">Đang tải dữ liệu…</div>
+        </div>
       </details>
     </section>
+
     <p id="status" role="status">Đang kết nối Firebase…</p>
   </main>
+
   <script>
-    const themeButton = document.getElementById('theme-toggle');
+    const themeButton = document.getElementById("theme-toggle");
     function applyTheme(isLight) {
-      document.body.classList.toggle('light', isLight);
-      themeButton.textContent = isLight ? '☾ Chế độ tối' : '☀ Chế độ sáng';
-      themeButton.setAttribute('aria-pressed', String(isLight));
-      themeButton.setAttribute('aria-label', isLight ? 'Bật chế độ tối' : 'Bật chế độ sáng');
+      document.body.classList.toggle("light", isLight);
+      themeButton.textContent = isLight ? "☾ Chế độ tối" : "☀ Chế độ sáng";
     }
-    let savedTheme = 'dark';
-    try { savedTheme = localStorage.getItem('production-theme') || 'dark'; } catch (_) {}
-    applyTheme(savedTheme === 'light');
-    themeButton.addEventListener('click', () => {
-      const isLight = !document.body.classList.contains('light');
+    let savedTheme = "dark";
+    try { savedTheme = localStorage.getItem("production-theme") || "dark"; } catch (_) {}
+    applyTheme(savedTheme === "light");
+    themeButton.addEventListener("click", () => {
+      const isLight = !document.body.classList.contains("light");
       applyTheme(isLight);
-      try { localStorage.setItem('production-theme', isLight ? 'light' : 'dark'); } catch (_) {}
+      try { localStorage.setItem("production-theme", isLight ? "light" : "dark"); } catch (_) {}
     });
-    const timeFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const dateFormat = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('time').textContent = timeFormat.format(now);
-      document.getElementById('date').textContent = dateFormat.format(now);
+
+    const selectedDateEl = document.getElementById("selected-date");
+    const prevButton = document.getElementById("prev-day");
+    const nextButton = document.getElementById("next-day");
+
+    function getVietnamDateParts(date = new Date()) {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone:"Asia/Ho_Chi_Minh", year:"numeric", month:"2-digit", day:"2-digit"
+      }).formatToParts(date);
+      const get = type => parts.find(p => p.type === type).value;
+      return { year:Number(get("year")), month:Number(get("month")), day:Number(get("day")) };
     }
-    updateClock();
-    setInterval(updateClock, 1000);
+    function partsToKey(p) {
+      return String(p.year).padStart(4,"0") + "-" + String(p.month).padStart(2,"0") + "-" + String(p.day).padStart(2,"0");
+    }
+    function partsToDisplay(p) {
+      return String(p.day).padStart(2,"0") + "/" + String(p.month).padStart(2,"0") + "/" + String(p.year).padStart(4,"0");
+    }
+    function shiftDate(p, delta) {
+      const d = new Date(Date.UTC(p.year,p.month-1,p.day+delta,12));
+      return { year:d.getUTCFullYear(), month:d.getUTCMonth()+1, day:d.getUTCDate() };
+    }
+    function compareDate(a,b) { return partsToKey(a).localeCompare(partsToKey(b)); }
+
+    let todayParts = getVietnamDateParts();
+    let selectedParts = { ...todayParts };
+    let selectedDateRef = null;
+    let legacyRef = null;
+
+    function updateDateUi() {
+      selectedDateEl.textContent = partsToDisplay(selectedParts);
+      nextButton.disabled = compareDate(selectedParts,todayParts) >= 0;
+    }
+    prevButton.addEventListener("click", () => {
+      selectedParts = shiftDate(selectedParts,-1);
+      updateDateUi();
+      subscribeSelectedDay();
+    });
+    nextButton.addEventListener("click", () => {
+      if (nextButton.disabled) return;
+      selectedParts = shiftDate(selectedParts,1);
+      if (compareDate(selectedParts,todayParts) > 0) selectedParts = { ...todayParts };
+      updateDateUi();
+      subscribeSelectedDay();
+    });
+
+    setInterval(() => {
+      const newToday = getVietnamDateParts();
+      if (partsToKey(newToday) !== partsToKey(todayParts)) {
+        const wasViewingToday = partsToKey(selectedParts) === partsToKey(todayParts);
+        todayParts = newToday;
+        if (wasViewingToday) {
+          selectedParts = { ...todayParts };
+          subscribeSelectedDay();
+        }
+        updateDateUi();
+      }
+    }, 10000);
+    updateDateUi();
 
     const firebaseConfig = {
-      apiKey: 'AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k',
-      authDomain: 'decalwebserver.firebaseapp.com',
-      projectId: 'decalwebserver',
-      storageBucket: 'decalwebserver.firebasestorage.app',
-      messagingSenderId: '331794269229',
-      appId: '1:331794269229:web:32f7be72cc879ff4bb64a4',
-      measurementId: 'G-WBJY5N4833',
-      databaseURL: 'https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app'
+      apiKey:"AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k",
+      authDomain:"decalwebserver.firebaseapp.com",
+      projectId:"decalwebserver",
+      storageBucket:"decalwebserver.firebasestorage.app",
+      messagingSenderId:"331794269229",
+      appId:"1:331794269229:web:32f7be72cc879ff4bb64a4",
+      measurementId:"G-WBJY5N4833",
+      databaseURL:"https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
-    const positionSelect = document.getElementById('position');
-    const status = document.getElementById('status');
-    let hasData = false;
-    let readError = false;
+
+    const totalLabelsEl = document.getElementById("total-labels");
+    const errorLabelsEl = document.getElementById("error-labels");
+    const activeRollLabel = document.getElementById("active-roll-label");
+    const errorRollLabel = document.getElementById("error-roll-label");
+    const defectiveRollCountEl = document.getElementById("defective-roll-count");
+    const rollList = document.getElementById("roll-list");
+    const status = document.getElementById("status");
+
+    let database = null;
     let connected = false;
-    function updateStatus() {
-      status.textContent = readError ? 'Không đọc được dữ liệu. Hãy kiểm tra quyền đọc Firebase và kết nối.'
-        : !connected ? 'Đang mất kết nối hoặc đang kết nối lại Firebase…'
-        : hasData ? ' ' : 'Hiện data đang trống';
+    let readError = false;
+
+    function updateStatus(message="") {
+      if (message) { status.textContent = message; return; }
+      status.textContent = readError ? "Không đọc được dữ liệu Firebase." : !connected ? "Đang kết nối lại Firebase…" : " ";
     }
-    function validPosition(value) {
-      return (typeof value === 'string' && value.trim() !== '' && value !== 'Chưa có') || typeof value === 'number';
+    function safeNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
     }
-    function renderPositions(data) {
-      const source = data.errorPositions || {};
-      const items = [];
+    function validImageUrl(value) {
+      if (typeof value !== "string" || !value.trim()) return null;
+      try {
+        const url = new URL(value);
+        if (url.protocol === "https:" || url.protocol === "http:") return url.href;
+      } catch (_) {}
+      return null;
+    }
 
-      Object.entries(source).forEach(([key, record]) => {
-        if (!record || typeof record !== 'object') return;
+    /*
+      Schema mới dự kiến:
+      ProductionByDate/
+        2026-11-07/
+          currentRollId: "roll_003"
+          rolls/
+            roll_001/
+              rollNumber: 1
+              totalLabels: 802
+              errorLabels: 2
+              status: "closed"
+              errors/
+                error_001/
+                  position: 120
+                  errorCount: 1
+                  imageUrl: "https://..."
+    */
 
-        const count = Number(record.errorCount);
+    function normalizeRolls(dayData) {
+      const source = dayData && dayData.rolls ? dayData.rolls : {};
+      return Object.entries(source)
+        .filter(([,roll]) => roll && typeof roll === "object")
+        .map(([id,roll],index) => {
+          const errorsSource = roll.errors || {};
+          const errors = Object.entries(errorsSource)
+            .filter(([,err]) => err && typeof err === "object")
+            .map(([errorId,err]) => ({
+              id:errorId,
+              position:err.position ?? "—",
+              errorCount:Math.max(1,safeNumber(err.errorCount)),
+              imageUrl:validImageUrl(err.imageUrl),
+              timestamp:safeNumber(err.timestamp)
+            }))
+            .sort((a,b) => a.timestamp-b.timestamp || String(a.position).localeCompare(String(b.position)));
+          return {
+            id,
+            rollNumber:safeNumber(roll.rollNumber) || index+1,
+            totalLabels:safeNumber(roll.totalLabels),
+            errorLabels:safeNumber(roll.errorLabels) || errors.reduce((sum,e) => sum+e.errorCount,0),
+            status:typeof roll.status === "string" ? roll.status : "closed",
+            errors
+          };
+        })
+        .sort((a,b) => a.rollNumber-b.rollNumber);
+    }
 
-        // Chỉ hiển thị decal có số lỗi là số nguyên dương.
-        if (!Number.isInteger(count) || count <= 0) return;
-        if (!validPosition(record.position)) return;
+    function getActiveRoll(dayData,rolls) {
+      if (!rolls.length) return null;
+      const currentId = dayData && typeof dayData.currentRollId === "string" ? dayData.currentRollId : null;
+      if (currentId) {
+        const current = rolls.find(r => r.id === currentId);
+        if (current) return current;
+      }
+      return rolls[rolls.length-1];
+    }
 
-        items.push({
-          key,
-          position: record.position,
-          errorCount: count,
-          imageUrl: record.imageUrl,
-          timestamp: Number(record.timestamp) || 0
-        });
-      });
+    function renderRolls(dayData) {
+      const rolls = normalizeRolls(dayData);
+      const activeRoll = getActiveRoll(dayData,rolls);
+      totalLabelsEl.textContent = activeRoll ? activeRoll.totalLabels : 0;
+      errorLabelsEl.textContent = activeRoll ? activeRoll.errorLabels : 0;
+      const caption = activeRoll ? "Cuộn " + activeRoll.rollNumber : "Chưa có cuộn";
+      activeRollLabel.textContent = caption;
+      errorRollLabel.textContent = caption;
 
-      items.sort((a, b) =>
-        b.timestamp - a.timestamp || b.key.localeCompare(a.key)
-      );
+      const defectiveRolls = rolls.filter(r => r.errorLabels > 0);
+      defectiveRollCountEl.textContent = defectiveRolls.length;
+      rollList.replaceChildren();
 
-      positionSelect.replaceChildren();
+      if (!defectiveRolls.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "Ngày này chưa có cuộn lỗi.";
+        rollList.appendChild(empty);
+        return;
+      }
 
-      //Mỗi bản ghi tương ứng với 1 decal lỗi
-      document.getElementById('errors').textContent = items.length;
+      defectiveRolls.forEach((roll,index) => {
+        const details = document.createElement("details");
+        details.className = "roll-item";
+        const summary = document.createElement("summary");
+        summary.className = "roll-summary";
+        summary.textContent = "Cuộn lỗi thứ " + (index+1) + ": " + roll.errorLabels + " nhãn lỗi";
+        const list = document.createElement("ul");
+        list.className = "error-list";
 
-      // Không có decal lỗi thì khung danh sách để trống.
-      items.forEach(item => {
-        const row = document.createElement('li');
-
-        row.appendChild(document.createTextNode(
-          item.position + ' — ' + item.errorCount + ' lỗi'
-        ));
-
-        // Chỉ thêm link khi có đường dẫn ảnh hợp lệ.
-        if (typeof item.imageUrl === 'string' && item.imageUrl.trim()) {
-          try {
-            const url = new URL(item.imageUrl);
-
-            if (url.protocol === 'https:' || url.protocol === 'http:') {
-              const link = document.createElement('a');
-              link.href = url.href;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              link.textContent = 'Vị trí lỗi';
-              link.style.color = 'inherit';
-
-              row.appendChild(document.createTextNode(' — '));
-              row.appendChild(link);
-            }
-          } catch (_) {}
+        if (!roll.errors.length) {
+          const row = document.createElement("li");
+          row.className = "empty";
+          row.textContent = "Cuộn này có lỗi nhưng chưa có chi tiết vị trí.";
+          list.appendChild(row);
         }
 
-        positionSelect.appendChild(row);
+        roll.errors.forEach(error => {
+          const row = document.createElement("li");
+          row.className = "error-row";
+          const position = document.createElement("span");
+          position.className = "error-position";
+          position.textContent = "Vị trí: " + error.position;
+          const count = document.createElement("span");
+          count.className = "error-count";
+          count.textContent = error.errorCount + " lỗi";
+          row.appendChild(position);
+          row.appendChild(count);
+
+          if (error.imageUrl) {
+            const link = document.createElement("a");
+            link.className = "check-link";
+            link.href = error.imageUrl;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Check";
+            row.appendChild(link);
+          } else {
+            const noImage = document.createElement("span");
+            noImage.className = "check-disabled";
+            noImage.textContent = "Chưa có ảnh";
+            row.appendChild(noImage);
+          }
+
+          list.appendChild(row);
+        });
+
+        details.appendChild(summary);
+        details.appendChild(list);
+        rollList.appendChild(details);
       });
     }
-    function showPositionMessage(message) {
-      const row = document.createElement('li');
-      row.className = 'empty';
-      row.textContent = message;
-      positionSelect.replaceChildren(row);
+
+    // Tạm tương thích dữ liệu cũ ProductionData trong lúc chưa đổi App/C++.
+    function renderLegacyProductionData(data) {
+      const source = (data && data.errorPositions) || {};
+      const errors = Object.entries(source)
+        .filter(([,item]) => item && typeof item === "object")
+        .map(([id,item]) => ({
+          id,
+          position:item.position ?? "—",
+          errorCount:Math.max(1,safeNumber(item.errorCount)),
+          imageUrl:item.imageUrl || "",
+          timestamp:safeNumber(item.timestamp)
+        }));
+      const errorLabels = errors.reduce((sum,item) => sum+item.errorCount,0);
+      renderRolls({
+        currentRollId:"legacy_current",
+        rolls:{
+          legacy_current:{
+            rollNumber:1,
+            totalLabels:safeNumber(data.totalPackages),
+            errorLabels,
+            status:"running",
+            errors:Object.fromEntries(errors.map(item => [item.id,item]))
+          }
+        }
+      });
     }
+
+    function detachDayListeners() {
+      if (selectedDateRef) { selectedDateRef.off(); selectedDateRef = null; }
+      if (legacyRef) { legacyRef.off(); legacyRef = null; }
+    }
+
+    function subscribeSelectedDay() {
+      if (!database) return;
+      detachDayListeners();
+      const dateKey = partsToKey(selectedParts);
+      status.textContent = "Đang tải " + partsToDisplay(selectedParts) + "…";
+      selectedDateRef = database.ref("ProductionByDate/" + dateKey);
+
+      selectedDateRef.on("value", snapshot => {
+        readError = false;
+        if (snapshot.exists()) {
+          renderRolls(snapshot.val() || {});
+          updateStatus();
+          return;
+        }
+
+        // Trong giai đoạn chuyển schema: ngày hiện tại fallback ProductionData cũ.
+        if (dateKey === partsToKey(todayParts)) {
+          legacyRef = database.ref("ProductionData");
+          legacyRef.once("value", legacySnapshot => {
+            if (legacySnapshot.exists()) renderLegacyProductionData(legacySnapshot.val() || {});
+            else renderRolls({});
+            updateStatus();
+          }, () => {
+            renderRolls({});
+            updateStatus();
+          });
+        } else {
+          renderRolls({});
+          updateStatus();
+        }
+      }, error => {
+        readError = true;
+        renderRolls({});
+        updateStatus("Không đọc được dữ liệu: " + (error.code || "Firebase error"));
+      });
+    }
+
     try {
       firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
-      database.ref('.info/connected').on('value', snapshot => {
+      database = firebase.database();
+      database.ref(".info/connected").on("value", snapshot => {
         connected = snapshot.val() === true;
         updateStatus();
       });
-      database.ref('ProductionData').on('value', snapshot => {
-        const data = snapshot.val() || {};
-        hasData = snapshot.exists();
-        readError = false;
-        document.getElementById('total').textContent = data.totalPackages ?? 0;
-        //document.getElementById('errors').textContent = data.errorLabels ?? 0;
-        renderPositions(data);
-        updateStatus();
-      }, error => {
-        readError = true;
-        updateStatus();
-        showPositionMessage('Không đọc được dữ liệu');
-        console.error('Firebase:', error.code);
-      });
+      subscribeSelectedDay();
     } catch (error) {
-      status.textContent = 'Không khởi tạo được Firebase. Hãy kiểm tra kết nối và cấu hình.';
-      showPositionMessage('Không kết nối được Firebase');
+      readError = true;
+      renderRolls({});
+      updateStatus("Không khởi tạo được Firebase.");
       console.error(error);
     }
   </script>
