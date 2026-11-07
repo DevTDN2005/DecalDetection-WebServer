@@ -1,156 +1,258 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Quản lý sản xuất bao bì</title>
 
-  <!-- FIREBASE -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <!-- ============================================================
+       FIREBASE
+       ============================================================ -->
+
+  <script
+    src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
+  </script>
+
+  <script
+    src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js">
+  </script>
+
 
   <style>
+
     * {
       box-sizing: border-box;
     }
 
+
     :root {
+
       --bg: #232728;
+
       --panel: #111111;
+
       --panel-soft: #181c1e;
+
       --panel-soft-2: #202629;
 
+
       --text: #c4ddff;
+
       --text-main: #e4eef8;
+
       --muted: #859da9;
+
 
       --border: #3d484f;
 
+
       --accent: #ffa337;
+
       --accent-dark: #de820e;
 
+
       --danger: #ef4438;
+
       --success: #39c76f;
+
     }
 
+
     body {
+
       margin: 0;
+
       padding: 22px 26px 40px;
 
+
       background: var(--bg);
+
       color: var(--text);
+
 
       font-family:
         "Segoe UI",
         Arial,
         sans-serif;
+
     }
 
+
     button {
+
       font-family: inherit;
+
     }
+
+
 
     /* ============================================================
        PAGE
        ============================================================ */
 
     .page {
+
       width: min(95vw, 1500px);
+
       margin: 0 auto;
+
     }
+
+
 
     /* ============================================================
        TOP BAR
        ============================================================ */
 
     .topbar {
+
       display: flex;
+
       justify-content: flex-end;
+
       align-items: center;
 
+
       margin-bottom: 8px;
+
     }
 
+
     .theme-toggle {
+
       padding: 10px 15px;
 
+
       border: 1px solid var(--border);
+
       border-radius: 9px;
 
+
       background: var(--panel);
+
       color: var(--text);
+
 
       font-weight: 600;
 
+
       cursor: pointer;
+
     }
 
+
     .theme-toggle:hover {
+
       border-color: var(--accent);
+
     }
+
+
 
     /* ============================================================
        DATE NAVIGATION
        ============================================================ */
 
     .date-navigation {
+
       display: flex;
 
+
       justify-content: center;
+
       align-items: center;
+
 
       gap: 16px;
 
+
       margin: 8px 0 18px;
+
     }
+
 
     .date-button {
+
       width: 54px;
+
       height: 42px;
 
+
       border: 1px solid var(--border);
+
       border-radius: 9px;
 
+
       background: var(--panel);
+
       color: var(--text);
 
+
       font-size: 21px;
+
       font-weight: 800;
 
+
       cursor: pointer;
+
     }
+
 
     .date-button:hover:not(:disabled) {
+
       border-color: var(--accent);
+
       color: var(--accent);
+
     }
+
 
     .date-button:disabled {
+
       opacity: 0.28;
 
+
       cursor: not-allowed;
+
     }
 
+
     .date-value {
+
       min-width: 180px;
+
 
       text-align: center;
 
+
       font-size: 21px;
+
       font-weight: 800;
 
+
       font-variant-numeric: tabular-nums;
+
     }
+
+
 
     /* ============================================================
        TITLE
        ============================================================ */
 
     h1 {
+
       margin: 0 0 28px;
 
+
       text-align: center;
+
 
       font-size: clamp(
         26px,
@@ -158,15 +260,21 @@
         38px
       );
 
+
       color: var(--text-main);
+
     }
+
+
 
     /* ============================================================
        CURRENT ROLL CARDS
        ============================================================ */
 
     .summary-grid {
+
       display: grid;
+
 
       grid-template-columns:
         repeat(
@@ -174,378 +282,594 @@
           minmax(0, 1fr)
         );
 
+
       gap: 18px;
+
 
       max-width: 900px;
 
+
       margin: 0 auto 26px;
+
     }
 
+
     .summary-card {
+
       min-height: 135px;
+
 
       padding: 25px 20px;
 
+
       border-radius: 14px;
+
 
       background: var(--panel);
 
+
       text-align: center;
+
     }
 
+
     .summary-card h3 {
+
       margin: 0 0 12px;
 
+
       color: var(--muted);
+
 
       font-size: 14px;
 
+
       text-transform: uppercase;
+
       letter-spacing: 0.5px;
+
     }
+
 
     .summary-number {
+
       font-size: 42px;
+
       font-weight: 800;
 
+
       font-variant-numeric: tabular-nums;
+
     }
+
 
     .error-summary .summary-number {
+
       color: var(--danger);
+
     }
 
+
     .summary-caption {
+
       margin-top: 5px;
+
 
       color: var(--muted);
 
+
       font-size: 12px;
+
     }
+
+
 
     /* ============================================================
        MAIN MANAGEMENT GRID
        ============================================================ */
 
     .management-grid {
+
       display: grid;
+
 
       grid-template-columns:
         minmax(0, 1fr)
         minmax(0, 1fr);
 
+
       gap: 22px;
 
+
       align-items: start;
+
     }
 
+
     .management-panel {
+
       padding: 18px;
+
 
       border-radius: 14px;
 
+
       background: var(--panel);
+
     }
 
+
+
     /* ============================================================
-       MAIN DETAILS
+       DETAILS
        ============================================================ */
 
     details {
+
       overflow: hidden;
+
 
       border:
         1px solid var(--accent-dark);
 
+
       border-radius: 8px;
+
     }
 
+
     summary {
+
       display: flex;
 
+
       align-items: center;
+
       justify-content: space-between;
+
 
       gap: 10px;
 
+
       padding: 14px 16px;
+
 
       list-style: none;
 
+
       cursor: pointer;
 
+
       user-select: none;
+
     }
+
 
     summary::-webkit-details-marker {
+
       display: none;
+
     }
 
+
     summary::after {
+
       content: "";
 
+
       width: 12px;
+
       height: 12px;
+
 
       border-right:
         3px solid currentColor;
 
+
       border-bottom:
         3px solid currentColor;
 
+
       transform: rotate(45deg);
 
+
       margin-right: 4px;
+
       margin-bottom: 6px;
+
 
       transition:
         transform 0.18s ease;
 
+
       flex-shrink: 0;
+
     }
+
 
     details[open] > summary::after {
+
       transform: rotate(225deg);
 
+
       margin-bottom: -5px;
+
     }
 
+
     .panel-summary {
+
       background: #21190f;
+
 
       color: var(--accent);
 
+
       font-size: 19px;
+
       font-weight: 800;
+
     }
 
+
+
     /* ============================================================
-       ROLL MANAGEMENT
+       QUẢN LÝ CUỘN
        ============================================================ */
 
     .roll-management-list {
+
       display: grid;
+
 
       gap: 8px;
 
+
       padding: 12px;
+
     }
 
+
     .roll-row {
+
       display: grid;
+
 
       grid-template-columns:
         100px
         1fr
         1.6fr;
 
+
       align-items: center;
+
 
       gap: 12px;
 
+
       padding: 14px 15px;
+
 
       border:
         1px solid #30383d;
 
+
       border-radius: 8px;
+
 
       background:
         var(--panel-soft);
+
     }
+
 
     .roll-name {
+
       font-weight: 800;
 
+
       color: var(--text-main);
+
     }
+
 
     .roll-total {
+
       color: var(--text);
+
     }
 
+
     .roll-time {
+
       text-align: right;
+
 
       color: var(--muted);
 
+
       font-variant-numeric: tabular-nums;
+
     }
+
 
     .roll-running {
+
       color: var(--success);
 
+
       font-weight: 700;
+
     }
+
+
 
     /* ============================================================
        ERROR ROLLS
        ============================================================ */
 
     .error-roll-list {
+
       display: grid;
+
 
       gap: 9px;
 
+
       padding: 12px;
+
     }
 
+
     .error-roll {
+
       border-color: #475158;
+
 
       background:
         var(--panel-soft);
+
     }
 
+
     .error-roll-summary {
+
       background:
         var(--panel-soft-2);
 
+
       color: var(--text-main);
 
+
       font-size: 15px;
+
       font-weight: 750;
+
     }
+
 
     .error-list {
+
       margin: 0;
+
       padding: 0;
 
+
       list-style: none;
+
     }
 
+
     .error-row {
+
       display: grid;
+
 
       grid-template-columns:
         1fr
         110px
         86px;
 
+
       align-items: center;
+
 
       gap: 10px;
 
+
       padding: 13px 14px;
+
 
       border-top:
         1px solid #30383d;
+
     }
+
 
     .error-position {
+
       color: var(--text);
+
     }
+
 
     .error-count {
+
       color: var(--text);
 
+
       text-align: center;
+
     }
 
+
     .check-link {
+
       justify-self: end;
 
+
       padding: 6px 11px;
+
 
       border:
         1px solid var(--accent-dark);
 
+
       border-radius: 7px;
+
 
       color: var(--accent);
 
+
       text-decoration: none;
 
+
       font-weight: 700;
+
     }
+
 
     .check-link:hover {
+
       background: #2a1e10;
+
     }
 
+
     .check-disabled {
+
       justify-self: end;
+
 
       color: var(--muted);
 
+
       font-size: 12px;
+
     }
+
+
 
     /* ============================================================
        EMPTY
        ============================================================ */
 
     .empty {
+
       padding: 42px 20px;
+
 
       text-align: center;
 
+
       color: var(--muted);
+
     }
+
+
 
     /* ============================================================
        STATUS
        ============================================================ */
 
     #status {
+
       min-height: 20px;
+
 
       margin: 16px 0 0;
 
+
       text-align: center;
+
 
       color: var(--muted);
 
+
       font-size: 13px;
+
     }
+
+
 
     /* ============================================================
        LIGHT MODE
        ============================================================ */
 
     body.light {
+
       --bg: #eef2f5;
 
+
       --panel: #ffffff;
+
       --panel-soft: #f7f9fa;
+
       --panel-soft-2: #eef3f6;
 
+
       --text: #2c3e50;
+
       --text-main: #263746;
+
 
       --muted: #667783;
 
+
       --border: #ccd5dd;
 
+
       color-scheme: light;
+
     }
+
 
     body:not(.light) {
+
       color-scheme: dark;
+
     }
+
 
     body.light .panel-summary {
+
       background: #fff8f0;
 
+
       color: #a85200;
+
     }
+
 
     body.light .roll-row,
     body.light .error-roll {
+
       border-color: #d8e0e5;
+
     }
+
 
     body.light .error-row {
+
       border-top-color: #dce3e7;
+
     }
+
 
     body.light .check-link {
+
       color: #a85200;
+
     }
 
+
     body.light .check-link:hover {
+
       background: #fff6ec;
+
     }
+
+
 
     /* ============================================================
        RESPONSIVE
@@ -554,59 +878,89 @@
     @media (max-width: 900px) {
 
       .management-grid {
+
         grid-template-columns: 1fr;
+
       }
 
     }
 
+
     @media (max-width: 650px) {
 
       body {
+
         padding: 14px;
+
       }
+
 
       .summary-grid {
+
         grid-template-columns: 1fr;
+
       }
 
+
       .roll-row {
+
         grid-template-columns:
           1fr
           1fr;
+
       }
+
 
       .roll-time {
+
         grid-column: 1 / -1;
 
+
         text-align: left;
+
       }
 
+
       .error-row {
+
         grid-template-columns:
           1fr
           auto;
+
       }
 
+
       .error-count {
+
         text-align: left;
+
       }
+
 
       .check-link,
       .check-disabled {
+
         grid-column: 2;
+
 
         grid-row:
           1 / span 2;
+
       }
 
     }
 
   </style>
+
 </head>
+
+
 
 <body>
 
+
   <main class="page">
+
 
     <!-- ============================================================
          THEME
@@ -619,10 +973,14 @@
         class="theme-toggle"
         type="button"
       >
+
         ☀ Chế độ sáng
+
       </button>
 
     </div>
+
+
 
     <!-- ============================================================
          DATE
@@ -630,38 +988,54 @@
 
     <div class="date-navigation">
 
+
       <button
         id="prev-day"
         class="date-button"
         type="button"
       >
+
         &lt;&lt;
+
       </button>
+
 
       <div
         id="selected-date"
         class="date-value"
       >
+
         --/--/----
+
       </div>
+
 
       <button
         id="next-day"
         class="date-button"
         type="button"
       >
+
         &gt;&gt;
+
       </button>
 
+
     </div>
+
+
 
     <!-- ============================================================
          TITLE
          ============================================================ -->
 
     <h1>
+
       QUẢN LÝ SẢN XUẤT BAO BÌ
+
     </h1>
+
+
 
     <!-- ============================================================
          CURRENT ROLL
@@ -669,27 +1043,42 @@
 
     <section class="summary-grid">
 
+
+      <!-- TỔNG NHÃN -->
+
       <div class="summary-card">
 
         <h3>
+
           Tổng nhãn của cuộn
+
         </h3>
+
 
         <div
           id="current-total"
           class="summary-number"
         >
+
           0
+
         </div>
+
 
         <div
           id="current-roll-caption"
           class="summary-caption"
         >
+
           Chưa có cuộn
+
         </div>
 
       </div>
+
+
+
+      <!-- SỐ NHÃN BỊ LỖI -->
 
       <div
         class="
@@ -699,43 +1088,58 @@
       >
 
         <h3>
+
           Số nhãn lỗi của cuộn
+
         </h3>
+
 
         <div
           id="current-error-total"
           class="summary-number"
         >
+
           0
+
         </div>
+
 
         <div
           id="current-error-caption"
           class="summary-caption"
         >
+
           Chưa có cuộn
+
         </div>
 
       </div>
 
+
     </section>
 
+
+
     <!-- ============================================================
-         2 COLUMN MANAGEMENT
+         2 COLUMN
          ============================================================ -->
 
     <section class="management-grid">
 
+
       <!-- ==========================================================
            LEFT
-           ALL ROLLS IN SELECTED DAY
+           QUẢN LÝ CUỘN
            ========================================================== -->
 
       <div class="management-panel">
 
+
         <details open>
 
+
           <summary class="panel-summary">
+
 
             <span>
 
@@ -744,38 +1148,53 @@
               <strong
                 id="total-roll-count"
               >
+
                 0
+
               </strong>
 
             </span>
 
+
           </summary>
+
 
           <div
             id="roll-management-list"
             class="roll-management-list"
           >
 
+
             <div class="empty">
+
               Chưa có dữ liệu cuộn.
+
             </div>
+
 
           </div>
 
+
         </details>
+
 
       </div>
 
+
+
       <!-- ==========================================================
            RIGHT
-           ERROR ROLLS
+           CUỘN LỖI
            ========================================================== -->
 
       <div class="management-panel">
 
+
         <details open>
 
+
           <summary class="panel-summary">
+
 
             <span>
 
@@ -784,29 +1203,42 @@
               <strong
                 id="error-roll-count"
               >
+
                 0
+
               </strong>
 
             </span>
 
+
           </summary>
+
 
           <div
             id="error-roll-list"
             class="error-roll-list"
           >
 
+
             <div class="empty">
+
               Chưa có dữ liệu lỗi.
+
             </div>
+
 
           </div>
 
+
         </details>
+
 
       </div>
 
+
     </section>
+
+
 
     <!-- ============================================================
          STATUS
@@ -816,12 +1248,18 @@
       id="status"
       role="status"
     >
+
       Đang kết nối Firebase…
+
     </p>
+
 
   </main>
 
+
+
   <script>
+
 
     // ================================================================
     // THEME
@@ -832,9 +1270,11 @@
         "theme-toggle"
       );
 
+
     function applyTheme(
       isLight
     ) {
+
 
       document.body
         .classList
@@ -843,6 +1283,7 @@
           isLight
         );
 
+
       themeButton.textContent =
         isLight
 
@@ -850,12 +1291,16 @@
 
           : "☀ Chế độ sáng";
 
+
     }
+
 
     let savedTheme =
       "dark";
 
+
     try {
+
 
       savedTheme =
         localStorage.getItem(
@@ -864,17 +1309,21 @@
         ||
         "dark";
 
+
     }
     catch (_) {
     }
+
 
     applyTheme(
       savedTheme === "light"
     );
 
+
     themeButton.addEventListener(
       "click",
       () => {
+
 
         const isLight =
           !document.body
@@ -883,25 +1332,33 @@
               "light"
             );
 
+
         applyTheme(
           isLight
         );
 
+
         try {
+
 
           localStorage.setItem(
             "production-theme",
+
             isLight
               ? "light"
               : "dark"
           );
 
+
         }
         catch (_) {
         }
 
+
       }
     );
+
+
 
     // ================================================================
     // DATE
@@ -912,24 +1369,34 @@
         "selected-date"
       );
 
+
     const prevDayButton =
       document.getElementById(
         "prev-day"
       );
+
 
     const nextDayButton =
       document.getElementById(
         "next-day"
       );
 
+
+
+    // --------------------------------------------------------------
+    // NGÀY HIỆN TẠI THEO VIỆT NAM
+    // --------------------------------------------------------------
+
     function getVietnamDateParts(
       date = new Date()
     ) {
+
 
       const parts =
         new Intl.DateTimeFormat(
           "en-CA",
           {
+
             timeZone:
               "Asia/Ho_Chi_Minh",
 
@@ -941,11 +1408,13 @@
 
             day:
               "2-digit"
+
           }
         )
         .formatToParts(
           date
         );
+
 
       const get =
         type =>
@@ -955,6 +1424,7 @@
               ===
               type
           ).value;
+
 
       return {
 
@@ -981,12 +1451,20 @@
 
       };
 
+
     }
+
+
+
+    // --------------------------------------------------------------
+    // yyyy-mm-dd
+    // --------------------------------------------------------------
 
     function dateToKey(
       date
     ) {
 
+
       return (
 
         String(
@@ -997,7 +1475,9 @@
           "0"
         )
 
+
         + "-"
+
 
         + String(
           date.month
@@ -1007,7 +1487,9 @@
           "0"
         )
 
+
         + "-"
+
 
         + String(
           date.day
@@ -1019,12 +1501,20 @@
 
       );
 
+
     }
+
+
+
+    // --------------------------------------------------------------
+    // dd/mm/yyyy
+    // --------------------------------------------------------------
 
     function dateToDisplay(
       date
     ) {
 
+
       return (
 
         String(
@@ -1035,7 +1525,9 @@
           "0"
         )
 
+
         + "/"
+
 
         + String(
           date.month
@@ -1045,7 +1537,9 @@
           "0"
         )
 
+
         + "/"
+
 
         + String(
           date.year
@@ -1057,22 +1551,36 @@
 
       );
 
+
     }
+
+
+
+    // --------------------------------------------------------------
+    // +/- ngày
+    // --------------------------------------------------------------
 
     function shiftDate(
       date,
       amount
     ) {
 
+
       const value =
         new Date(
           Date.UTC(
+
             date.year,
+
             date.month - 1,
+
             date.day + amount,
+
             12
+
           )
         );
+
 
       return {
 
@@ -1087,12 +1595,16 @@
 
       };
 
+
     }
+
+
 
     function compareDate(
       first,
       second
     ) {
+
 
       return dateToKey(
         first
@@ -1103,21 +1615,33 @@
         )
       );
 
+
     }
+
+
 
     let today =
       getVietnamDateParts();
 
+
     let selectedDate = {
+
       ...today
+
     };
 
+
+
     function updateDateControls() {
+
 
       selectedDateElement.textContent =
         dateToDisplay(
           selectedDate
         );
+
+
+      // KHÔNG CHO ĐI TỚI TƯƠNG LAI
 
       nextDayButton.disabled =
         compareDate(
@@ -1127,11 +1651,19 @@
         >=
         0;
 
+
     }
+
+
+
+    // --------------------------------------------------------------
+    // PREVIOUS DAY
+    // --------------------------------------------------------------
 
     prevDayButton.addEventListener(
       "click",
       () => {
+
 
         selectedDate =
           shiftDate(
@@ -1139,16 +1671,26 @@
             -1
           );
 
+
         updateDateControls();
 
+
         subscribeSelectedDate();
+
 
       }
     );
 
+
+
+    // --------------------------------------------------------------
+    // NEXT DAY
+    // --------------------------------------------------------------
+
     nextDayButton.addEventListener(
       "click",
       () => {
+
 
         if (
           nextDayButton.disabled
@@ -1158,11 +1700,13 @@
 
         }
 
+
         selectedDate =
           shiftDate(
             selectedDate,
             1
           );
+
 
         if (
           compareDate(
@@ -1173,28 +1717,39 @@
           0
         ) {
 
+
           selectedDate = {
+
             ...today
+
           };
+
 
         }
 
+
         updateDateControls();
 
+
         subscribeSelectedDate();
+
 
       }
     );
 
+
+
     // ================================================================
-    // MIDNIGHT
+    // MIDNIGHT CHECK
     // ================================================================
 
     setInterval(
       () => {
 
+
         const newToday =
           getVietnamDateParts();
+
 
         if (
           dateToKey(
@@ -1206,6 +1761,7 @@
           )
         ) {
 
+
           const viewingToday =
             dateToKey(
               selectedDate
@@ -1215,69 +1771,97 @@
               today
             );
 
+
           today =
             newToday;
+
 
           if (
             viewingToday
           ) {
 
+
             selectedDate = {
+
               ...today
+
             };
+
 
             subscribeSelectedDate();
 
+
           }
+
 
           updateDateControls();
 
+
         }
 
+
       },
+
       10000
     );
 
+
     updateDateControls();
 
+
+
     // ================================================================
-    // FIREBASE
+    // FIREBASE CONFIG
     // ================================================================
 
     const firebaseConfig = {
 
+
       apiKey:
         "AIzaSyB9Uq8HIFo6FjKG0zw2uCYOutq6s1HOK5k",
+
 
       authDomain:
         "decalwebserver.firebaseapp.com",
 
+
       projectId:
         "decalwebserver",
+
 
       storageBucket:
         "decalwebserver.firebasestorage.app",
 
+
       messagingSenderId:
         "331794269229",
+
 
       appId:
         "1:331794269229:web:32f7be72cc879ff4bb64a4",
 
+
       measurementId:
         "G-WBJY5N4833",
+
 
       databaseURL:
         "https://decalwebserver-default-rtdb.asia-southeast1.firebasedatabase.app"
 
+
     };
+
+
 
     firebase.initializeApp(
       firebaseConfig
     );
 
+
     const database =
       firebase.database();
+
+
 
     // ================================================================
     // UI ELEMENTS
@@ -1288,48 +1872,59 @@
         "current-total"
       );
 
+
     const currentErrorElement =
       document.getElementById(
         "current-error-total"
       );
+
 
     const currentRollCaption =
       document.getElementById(
         "current-roll-caption"
       );
 
+
     const currentErrorCaption =
       document.getElementById(
         "current-error-caption"
       );
+
 
     const totalRollCountElement =
       document.getElementById(
         "total-roll-count"
       );
 
+
     const errorRollCountElement =
       document.getElementById(
         "error-roll-count"
       );
+
 
     const rollManagementList =
       document.getElementById(
         "roll-management-list"
       );
 
+
     const errorRollList =
       document.getElementById(
         "error-roll-list"
       );
+
 
     const statusElement =
       document.getElementById(
         "status"
       );
 
+
     let selectedDateReference =
       null;
+
+
 
     // ================================================================
     // HELPERS
@@ -1339,27 +1934,40 @@
       value
     ) {
 
+
       const number =
         Number(
           value
         );
 
+
       return Number.isFinite(
         number
       )
+
         ? number
+
         : 0;
 
+
     }
+
+
+
+    // --------------------------------------------------------------
+    // TIME
+    // --------------------------------------------------------------
 
     function formatTime(
       value
     ) {
 
+
       const timestamp =
         Number(
           value
         );
+
 
       if (
         !Number.isFinite(
@@ -1369,13 +1977,17 @@
         timestamp <= 0
       ) {
 
+
         return "--:--:--";
 
+
       }
+
 
       return new Intl.DateTimeFormat(
         "vi-VN",
         {
+
           timeZone:
             "Asia/Ho_Chi_Minh",
 
@@ -1390,6 +2002,7 @@
 
           hour12:
             false
+
         }
       )
       .format(
@@ -1398,11 +2011,19 @@
         )
       );
 
+
     }
+
+
+
+    // --------------------------------------------------------------
+    // IMAGE URL
+    // --------------------------------------------------------------
 
     function validImageUrl(
       value
     ) {
+
 
       if (
         typeof value
@@ -1412,16 +2033,21 @@
         !value.trim()
       ) {
 
+
         return null;
+
 
       }
 
+
       try {
+
 
         const url =
           new URL(
             value
           );
+
 
         if (
           url.protocol
@@ -1433,25 +2059,35 @@
           "https:"
         ) {
 
+
           return url.href;
 
+
         }
+
 
       }
       catch (_) {
       }
 
+
       return null;
+
 
     }
 
+
+
     // ================================================================
     // NORMALIZE ROLLS
+    //
+    // QUẢN LÝ TẤT CẢ CUỘN TRONG NGÀY
     // ================================================================
 
     function normalizeRolls(
       data
     ) {
+
 
       const source =
         data
@@ -1462,9 +2098,11 @@
 
           : {};
 
+
       return Object.entries(
         source
       )
+
 
       .filter(
         ([, roll]) =>
@@ -1475,37 +2113,49 @@
             "object"
       )
 
+
       .map(
         (
           [id, roll],
           index
         ) => ({
 
+
           id,
 
+
           rollNumber:
+
             safeNumber(
               roll.rollNumber
             )
             ||
             index + 1,
 
+
           totalLabels:
+
             safeNumber(
               roll.totalLabels
             ),
 
+
           startTime:
+
             safeNumber(
               roll.startTime
             ),
 
+
           endTime:
+
             safeNumber(
               roll.endTime
             ),
 
+
           status:
+
             typeof roll.status
               ===
               "string"
@@ -1514,31 +2164,38 @@
 
               : "closed"
 
+
         })
       )
+
 
       .sort(
         (
           a,
           b
         ) =>
+
           a.rollNumber
           -
           b.rollNumber
+
       );
 
+
     }
+
+
 
     // ================================================================
     // NORMALIZE ERROR ROLLS
     //
-    // ERROR ROLLS HOÀN TOÀN ĐỘC LẬP
-    // VỚI QUẢN LÝ CUỘN.
+    // HOÀN TOÀN ĐỘC LẬP VỚI QUẢN LÝ CUỘN
     // ================================================================
 
     function normalizeErrorRolls(
       data
     ) {
+
 
       const source =
         data
@@ -1549,9 +2206,11 @@
 
           : {};
 
+
       return Object.entries(
         source
       )
+
 
       .filter(
         ([, errorRoll]) =>
@@ -1562,21 +2221,25 @@
             "object"
       )
 
+
       .map(
         (
           [id, errorRoll],
           index
         ) => {
 
+
           const errorsSource =
             errorRoll.errors
             ||
             {};
 
+
           const errors =
             Object.entries(
               errorsSource
             )
+
 
             .filter(
               ([, error]) =>
@@ -1587,39 +2250,61 @@
                   "object"
             )
 
+
             .map(
               (
                 [errorId, error]
               ) => ({
 
+
                 id:
                   errorId,
 
+
                 position:
+
                   error.position
                   ??
                   "—",
 
+
+                /*
+                 * SỐ LỖI TRÊN NHÃN NÀY
+                 *
+                 * Ví dụ:
+                 * nhãn 120 có 9 lỗi
+                 *
+                 * => errorCount = 9
+                 */
+
                 errorCount:
+
                   Math.max(
                     1,
+
                     safeNumber(
                       error.errorCount
                     )
                   ),
 
+
                 imageUrl:
+
                   validImageUrl(
                     error.imageUrl
                   ),
 
+
                 timestamp:
+
                   safeNumber(
                     error.timestamp
                   )
 
+
               })
             )
+
 
             .sort(
               (
@@ -1633,35 +2318,48 @@
 
             );
 
+
           return {
+
 
             id,
 
+
             errorRollNumber:
+
               safeNumber(
                 errorRoll.errorRollNumber
               )
               ||
               index + 1,
 
+
             errors
+
 
           };
 
+
         }
       )
+
 
       .sort(
         (
           a,
           b
         ) =>
+
           a.errorRollNumber
           -
           b.errorRollNumber
+
       );
 
+
     }
+
+
 
     // ================================================================
     // CURRENT ROLL
@@ -1672,13 +2370,17 @@
       rolls
     ) {
 
+
       if (
         !rolls.length
       ) {
 
+
         return null;
 
+
       }
+
 
       if (
         data
@@ -1688,6 +2390,7 @@
           "string"
       ) {
 
+
         const found =
           rolls.find(
             roll =>
@@ -1696,107 +2399,152 @@
               data.currentRollId
           );
 
+
         if (
           found
         ) {
 
+
           return found;
+
 
         }
 
+
       }
+
 
       return rolls[
         rolls.length - 1
       ];
 
+
     }
 
+
+
     // ================================================================
-    // RENDER ROLL MANAGEMENT
+    // QUẢN LÝ CUỘN
     // ================================================================
 
     function renderRollManagement(
       rolls
     ) {
 
+
       totalRollCountElement.textContent =
         rolls.length;
 
+
       rollManagementList.replaceChildren();
+
 
       if (
         !rolls.length
       ) {
+
 
         const empty =
           document.createElement(
             "div"
           );
 
+
         empty.className =
           "empty";
 
+
         empty.textContent =
           "Ngày này chưa có cuộn sản xuất.";
+
 
         rollManagementList.appendChild(
           empty
         );
 
+
         return;
+
 
       }
 
+
+
       rolls.forEach(
         roll => {
+
 
           const row =
             document.createElement(
               "div"
             );
 
+
           row.className =
             "roll-row";
+
+
+          // ----------------------------------------------------------
+          // TÊN CUỘN
+          // ----------------------------------------------------------
 
           const name =
             document.createElement(
               "div"
             );
 
+
           name.className =
             "roll-name";
+
 
           name.textContent =
             "Cuộn "
             +
             roll.rollNumber;
 
+
+
+          // ----------------------------------------------------------
+          // TỔNG NHÃN
+          // ----------------------------------------------------------
+
           const total =
             document.createElement(
               "div"
             );
 
+
           total.className =
             "roll-total";
+
 
           total.textContent =
             roll.totalLabels
             +
             " nhãn";
 
+
+
+          // ----------------------------------------------------------
+          // TIME
+          // ----------------------------------------------------------
+
           const time =
             document.createElement(
               "div"
             );
 
+
           time.className =
             "roll-time";
+
 
           const startText =
             formatTime(
               roll.startTime
             );
+
 
           if (
             roll.status
@@ -1805,6 +2553,7 @@
             ||
             !roll.endTime
           ) {
+
 
             time.innerHTML =
               startText
@@ -1817,8 +2566,10 @@
               +
               "</span>";
 
+
           }
           else {
+
 
             time.textContent =
               startText
@@ -1829,237 +2580,335 @@
                 roll.endTime
               );
 
+
           }
+
+
 
           row.appendChild(
             name
           );
 
+
           row.appendChild(
             total
           );
+
 
           row.appendChild(
             time
           );
 
+
           rollManagementList.appendChild(
             row
           );
 
+
         }
       );
 
+
     }
 
+
+
     // ================================================================
-    // RENDER ERROR ROLLS
+    // ERROR ROLLS
     // ================================================================
 
     function renderErrorRolls(
       errorRolls
     ) {
 
+
       errorRollCountElement.textContent =
         errorRolls.length;
 
+
       errorRollList.replaceChildren();
+
 
       if (
         !errorRolls.length
       ) {
+
 
         const empty =
           document.createElement(
             "div"
           );
 
+
         empty.className =
           "empty";
 
+
         empty.textContent =
           "Ngày này chưa ghi nhận cuộn lỗi.";
+
 
         errorRollList.appendChild(
           empty
         );
 
+
         return;
+
 
       }
 
+
+
       errorRolls.forEach(
         errorRoll => {
+
 
           const details =
             document.createElement(
               "details"
             );
 
+
           details.className =
             "error-roll";
+
+
+
+          // ----------------------------------------------------------
+          // ERROR ROLL SUMMARY
+          // ----------------------------------------------------------
 
           const summary =
             document.createElement(
               "summary"
             );
 
+
           summary.className =
             "error-roll-summary";
+
 
           summary.textContent =
             "Cuộn lỗi "
             +
             errorRoll.errorRollNumber;
 
+
+
+          // ----------------------------------------------------------
+          // ERROR LIST
+          // ----------------------------------------------------------
+
           const list =
             document.createElement(
               "ul"
             );
 
+
           list.className =
             "error-list";
+
+
 
           if (
             !errorRoll.errors.length
           ) {
+
 
             const empty =
               document.createElement(
                 "li"
               );
 
+
             empty.className =
               "empty";
 
+
             empty.textContent =
               "Chưa có chi tiết lỗi.";
+
 
             list.appendChild(
               empty
             );
 
+
           }
+
+
 
           errorRoll.errors.forEach(
             error => {
+
 
               const row =
                 document.createElement(
                   "li"
                 );
 
+
               row.className =
                 "error-row";
+
+
+
+              // ------------------------------------------------------
+              // VỊ TRÍ NHÃN
+              // ------------------------------------------------------
 
               const position =
                 document.createElement(
                   "span"
                 );
 
+
               position.className =
                 "error-position";
+
 
               position.textContent =
                 "Vị trí: "
                 +
                 error.position;
 
+
+
+              // ------------------------------------------------------
+              // SỐ LỖI TRÊN NHÃN
+              // ------------------------------------------------------
+
               const count =
                 document.createElement(
                   "span"
                 );
 
+
               count.className =
                 "error-count";
+
 
               count.textContent =
                 error.errorCount
                 +
                 " lỗi";
 
+
+
               row.appendChild(
                 position
               );
+
 
               row.appendChild(
                 count
               );
 
+
+
+              // ------------------------------------------------------
+              // CHECK IMAGE
+              // ------------------------------------------------------
+
               if (
                 error.imageUrl
               ) {
+
 
                 const link =
                   document.createElement(
                     "a"
                   );
 
+
                 link.className =
                   "check-link";
+
 
                 link.href =
                   error.imageUrl;
 
+
                 link.target =
                   "_blank";
+
 
                 link.rel =
                   "noopener noreferrer";
 
+
                 link.textContent =
                   "Check";
+
 
                 row.appendChild(
                   link
                 );
 
+
               }
               else {
+
 
                 const noImage =
                   document.createElement(
                     "span"
                   );
 
+
                 noImage.className =
                   "check-disabled";
 
+
                 noImage.textContent =
                   "Chưa có ảnh";
+
 
                 row.appendChild(
                   noImage
                 );
 
+
               }
+
+
 
               list.appendChild(
                 row
               );
 
+
             }
           );
+
+
 
           details.appendChild(
             summary
           );
 
+
           details.appendChild(
             list
           );
+
 
           errorRollList.appendChild(
             details
           );
 
+
         }
       );
 
+
     }
 
+
+
     // ================================================================
-    // RENDER CURRENT ROLL SUMMARY
+    // CURRENT ROLL SUMMARY
     // ================================================================
 
     function renderCurrentRoll(
@@ -2067,58 +2916,92 @@
       rolls
     ) {
 
+
       const currentRoll =
         getCurrentRoll(
           data,
           rolls
         );
 
+
       if (
         !currentRoll
       ) {
 
+
         currentTotalElement.textContent =
           0;
+
 
         currentErrorElement.textContent =
           0;
 
+
         currentRollCaption.textContent =
           "Chưa có cuộn";
+
 
         currentErrorCaption.textContent =
           "Chưa có cuộn";
 
+
         return;
+
 
       }
 
+
+
+      // --------------------------------------------------------------
+      // TỔNG NHÃN CỦA CUỘN
+      // --------------------------------------------------------------
+
       currentTotalElement.textContent =
         currentRoll.totalLabels;
+
+
 
       currentRollCaption.textContent =
         "Cuộn "
         +
         currentRoll.rollNumber;
 
+
+
       currentErrorCaption.textContent =
         "Cuộn "
         +
         currentRoll.rollNumber;
 
-      /*
-       * errorLabelsCurrentRoll
-       * sẽ được App/C++ cập nhật sau.
-       *
-       * Nếu chưa có thì mặc định 0.
-       */
+
+
+      // --------------------------------------------------------------
+      // QUAN TRỌNG
+      //
+      // currentErrorLabels =
+      //
+      // SỐ NHÃN BỊ LỖI
+      //
+      // KHÔNG PHẢI TỔNG SỐ LỖI
+      //
+      // Ví dụ:
+      //
+      // Nhãn 120: 9 lỗi
+      // Nhãn 306: 5 lỗi
+      // Nhãn 802: 2 lỗi
+      //
+      // currentErrorLabels = 3
+      // --------------------------------------------------------------
 
       currentErrorElement.textContent =
         safeNumber(
           data.currentErrorLabels
         );
 
+
     }
+
+
 
     // ================================================================
     // MAIN RENDER
@@ -2128,66 +3011,98 @@
       data
     ) {
 
+
       const rolls =
         normalizeRolls(
           data
         );
+
 
       const errorRolls =
         normalizeErrorRolls(
           data
         );
 
+
       renderCurrentRoll(
         data,
         rolls
       );
 
+
       renderRollManagement(
         rolls
       );
+
 
       renderErrorRolls(
         errorRolls
       );
 
+
     }
+
+
 
     // ================================================================
     // LEGACY DATABASE
     //
-    // Tạm thời dùng ProductionData hiện tại
-    // để giao diện vẫn có dữ liệu trước khi
-    // App được sửa sang schema mới.
+    // Database cũ hiện tại:
+    //
+    // ProductionData
+    //
+    // ├── totalPackages
+    //
+    // └── errorPositions
+    //
+    // Mỗi record trong errorPositions
+    // tương ứng với 1 NHÃN BỊ LỖI.
     // ================================================================
 
     function renderLegacyData(
       legacy
     ) {
 
+
       const oldErrors =
         legacy.errorPositions
         ||
         {};
+
 
       const errorItems =
         Object.entries(
           oldErrors
         );
 
+
       const mappedErrors =
         {};
+
 
       let index =
         1;
 
-      let errorTotal =
+
+
+      // ==============================================================
+      // SỐ NHÃN BỊ LỖI
+      //
+      // Không cộng errorCount.
+      //
+      // Mỗi record = 1 nhãn lỗi.
+      // ==============================================================
+
+      let defectiveLabelCount =
         0;
+
+
 
       errorItems.forEach(
         (
           [key, item]
         ) => {
+
 
           if (
             !item
@@ -2197,20 +3112,38 @@
               "object"
           ) {
 
+
             return;
 
+
           }
+
+
+
+          // ----------------------------------------------------------
+          // Số lỗi nằm trên NHÃN này
+          //
+          // VD: 9 lỗi
+          // ----------------------------------------------------------
 
           const count =
             Math.max(
               1,
+
               safeNumber(
                 item.errorCount
               )
             );
 
-          errorTotal +=
-            count;
+
+
+          // ----------------------------------------------------------
+          // MỖI RECORD = 1 NHÃN BỊ LỖI
+          // ----------------------------------------------------------
+
+          defectiveLabelCount++;
+
+
 
           mappedErrors[
             "error_"
@@ -2218,109 +3151,177 @@
             index
           ] = {
 
+
             position:
+
               item.position
               ??
               key,
 
+
             errorCount:
+
               count,
 
+
             imageUrl:
+
               item.imageUrl
               ||
               "",
 
+
             timestamp:
+
               safeNumber(
                 item.timestamp
               )
 
+
           };
 
+
           index++;
+
 
         }
       );
 
+
+
+      // ==============================================================
+      // MAP DATABASE CŨ
+      // THÀNH DATABASE MỚI TẠM THỜI
+      // ==============================================================
+
       const legacyData = {
+
 
         currentRollId:
           "roll_001",
 
+
+
+        /*
+         * QUAN TRỌNG
+         *
+         * Đây là SỐ NHÃN BỊ LỖI.
+         *
+         * VD 3 record errorPositions
+         * => currentErrorLabels = 3
+         */
+
         currentErrorLabels:
-          errorTotal,
+          defectiveLabelCount,
+
+
 
         rolls: {
 
+
           roll_001: {
+
 
             rollNumber:
               1,
 
+
             totalLabels:
+
               safeNumber(
                 legacy.totalPackages
               ),
 
+
             startTime:
               0,
+
 
             endTime:
               0,
 
+
             status:
               "running"
 
+
           }
+
 
         },
 
+
+
+        // ============================================================
+        // ERROR ROLLS
+        //
+        // Chỉ cần có >= 1 nhãn bị lỗi
+        // thì tạo một errorRoll tạm.
+        // ============================================================
+
         errorRolls:
-          errorTotal > 0
+
+          defectiveLabelCount > 0
 
             ? {
 
+
                 errorRoll_001: {
+
 
                   errorRollNumber:
                     1,
 
+
                   errors:
                     mappedErrors
 
+
                 }
+
 
               }
 
             : {}
 
+
       };
+
 
       renderData(
         legacyData
       );
 
+
     }
 
+
+
     // ================================================================
-    // SUBSCRIBE DATE
+    // SUBSCRIBE SELECTED DATE
     // ================================================================
 
     function subscribeSelectedDate() {
+
 
       if (
         selectedDateReference
       ) {
 
+
         selectedDateReference.off();
 
+
       }
+
+
 
       const dateKey =
         dateToKey(
           selectedDate
         );
+
+
 
       statusElement.textContent =
         "Đang tải dữ liệu "
@@ -2331,6 +3332,8 @@
         +
         "…";
 
+
+
       selectedDateReference =
         database.ref(
           "ProductionByDate/"
@@ -2338,19 +3341,25 @@
           dateKey
         );
 
+
+
       selectedDateReference.on(
+
 
         "value",
 
+
         snapshot => {
 
+
           // ==========================================================
-          // NEW DATABASE
+          // DATABASE MỚI
           // ==========================================================
 
           if (
             snapshot.exists()
           ) {
+
 
             renderData(
               snapshot.val()
@@ -2358,17 +3367,22 @@
               {}
             );
 
+
             statusElement.textContent =
               "";
 
+
             return;
+
 
           }
 
+
+
           // ==========================================================
-          // LEGACY DATABASE
+          // DATABASE CŨ
           //
-          // Chỉ fallback khi đang xem hôm nay.
+          // Chỉ dùng khi đang xem HÔM NAY.
           // ==========================================================
 
           if (
@@ -2379,18 +3393,24 @@
             )
           ) {
 
+
             database
               .ref(
                 "ProductionData"
               )
               .once(
+
+
                 "value",
 
+
                 legacySnapshot => {
+
 
                   if (
                     legacySnapshot.exists()
                   ) {
+
 
                     renderLegacyData(
                       legacySnapshot.val()
@@ -2398,53 +3418,79 @@
                       {}
                     );
 
+
                   }
                   else {
+
 
                     renderData(
                       {}
                     );
 
+
                   }
+
 
                   statusElement.textContent =
                     "";
 
+
                 }
+
+
               );
+
 
           }
           else {
+
+
+            // ========================================================
+            // NGÀY CŨ KHÔNG CÓ DATA
+            // ========================================================
 
             renderData(
               {}
             );
 
+
             statusElement.textContent =
               "";
 
+
           }
+
 
         },
 
+
+
         error => {
+
 
           console.error(
             error
           );
 
+
           renderData(
             {}
           );
 
+
           statusElement.textContent =
             "Không đọc được dữ liệu Firebase.";
 
+
         }
+
 
       );
 
+
     }
+
+
 
     // ================================================================
     // FIREBASE CONNECTION STATUS
@@ -2458,19 +3504,25 @@
         "value",
         snapshot => {
 
+
           if (
             snapshot.val()
             !==
             true
           ) {
 
+
             statusElement.textContent =
               "Đang kết nối lại Firebase…";
 
+
           }
+
 
         }
       );
+
+
 
     // ================================================================
     // START
@@ -2478,7 +3530,10 @@
 
     subscribeSelectedDate();
 
+
   </script>
 
+
 </body>
+
 </html>
