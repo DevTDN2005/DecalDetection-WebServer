@@ -2140,6 +2140,27 @@
             ),
 
 
+          errorLabels:
+
+            safeNumber(
+              roll.errorLabels
+            ),
+
+
+          closeReason:
+
+            typeof roll.closeReason === "string"
+              ? roll.closeReason
+              : "",
+
+
+          continuedFrom:
+
+            typeof roll.continuedFrom === "string"
+              ? roll.continuedFrom
+              : "",
+
+
           startTime:
 
             safeNumber(
@@ -2196,167 +2217,87 @@
       data
     ) {
 
-
       const source =
-        data
-        &&
-        data.errorRolls
-
+        data && data.errorRolls
           ? data.errorRolls
-
           : {};
 
+      // New schema: errorRolls/roll_003 -> defects of REAL Roll 3.
+      // Legacy schema: errorRoll_001 still contains sourceRollId/
+      // sourceRollNumber. Grouping by the source roll keeps old data readable
+      // while eliminating the misleading independent error-roll numbering.
+      const grouped = new Map();
 
-      return Object.entries(
-        source
-      )
+      Object.entries(source)
+        .filter(([, value]) =>
+          value && typeof value === "object"
+        )
+        .forEach(([id, value]) => {
 
+          const sourceRollId =
+            typeof value.sourceRollId === "string"
+              && value.sourceRollId
+              ? value.sourceRollId
+              : (id.startsWith("roll_") ? id : id);
 
-      .filter(
-        ([, errorRoll]) =>
-          errorRoll
-          &&
-          typeof errorRoll
-            ===
-            "object"
-      )
+          let sourceRollNumber =
+            safeNumber(value.sourceRollNumber);
 
+          if (!sourceRollNumber && sourceRollId.startsWith("roll_")) {
+            sourceRollNumber =
+              safeNumber(sourceRollId.replace("roll_", ""));
+          }
 
-      .map(
-        (
-          [id, errorRoll],
-          index
-        ) => {
+          if (!sourceRollNumber) {
+            // Last-resort compatibility for very old data.
+            sourceRollNumber =
+              safeNumber(value.errorRollNumber);
+          }
 
+          const key =
+            sourceRollId || ("roll_number_" + sourceRollNumber);
 
-          const errorsSource =
-            errorRoll.errors
-            ||
-            {};
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              id: key,
+              sourceRollId,
+              sourceRollNumber,
+              errors: []
+            });
+          }
 
+          const group = grouped.get(key);
+          const errorsSource = value.errors || {};
 
-          const errors =
-            Object.entries(
-              errorsSource
+          Object.entries(errorsSource)
+            .filter(([, error]) =>
+              error && typeof error === "object"
             )
+            .forEach(([errorId, error]) => {
+              group.errors.push({
+                id: errorId,
+                position: error.position ?? "—",
+                errorCount: Math.max(
+                  1,
+                  safeNumber(error.errorCount)
+                ),
+                imageUrl: validImageUrl(error.imageUrl),
+                timestamp: safeNumber(error.timestamp)
+              });
+            });
+        });
 
-
-            .filter(
-              ([, error]) =>
-                error
-                &&
-                typeof error
-                  ===
-                  "object"
-            )
-
-
-            .map(
-              (
-                [errorId, error]
-              ) => ({
-
-
-                id:
-                  errorId,
-
-
-                position:
-
-                  error.position
-                  ??
-                  "—",
-
-
-                /*
-                 * SỐ LỖI TRÊN NHÃN NÀY
-                 *
-                 * Ví dụ:
-                 * nhãn 120 có 9 lỗi
-                 *
-                 * => errorCount = 9
-                 */
-
-                errorCount:
-
-                  Math.max(
-                    1,
-
-                    safeNumber(
-                      error.errorCount
-                    )
-                  ),
-
-
-                imageUrl:
-
-                  validImageUrl(
-                    error.imageUrl
-                  ),
-
-
-                timestamp:
-
-                  safeNumber(
-                    error.timestamp
-                  )
-
-
-              })
-            )
-
-
-            .sort(
-              (
-                a,
-                b
-              ) =>
-
-                a.timestamp
-                -
-                b.timestamp
-
-            );
-
-
-          return {
-
-
-            id,
-
-
-            errorRollNumber:
-
-              safeNumber(
-                errorRoll.errorRollNumber
-              )
-              ||
-              index + 1,
-
-
-            errors
-
-
-          };
-
-
-        }
-      )
-
-
-      .sort(
-        (
-          a,
-          b
-        ) =>
-
-          a.errorRollNumber
-          -
-          b.errorRollNumber
-
-      );
-
-
+      return Array.from(grouped.values())
+        .map(group => ({
+          ...group,
+          errors: group.errors.sort(
+            (a, b) => a.timestamp - b.timestamp
+          )
+        }))
+        .sort(
+          (a, b) =>
+            a.sourceRollNumber - b.sourceRollNumber
+        );
     }
 
 
@@ -2546,14 +2487,14 @@
             );
 
 
-          if (
-            roll.status
-            ===
-            "running"
-            ||
-            !roll.endTime
-          ) {
+          const isHistoricalDay =
+            compareDate(selectedDate, today) < 0;
 
+          if (
+            (roll.status === "running" || !roll.endTime)
+            &&
+            !isHistoricalDay
+          ) {
 
             time.innerHTML =
               startText
@@ -2566,6 +2507,17 @@
               +
               "</span>";
 
+          }
+          else if (
+            isHistoricalDay
+            &&
+            (roll.status === "running" || !roll.endTime)
+          ) {
+
+            // Defensive display for legacy records created before automatic
+            // shutdown/startup reconciliation existed.
+            time.textContent =
+              startText + " → Đã kết thúc ngày";
 
           }
           else {
@@ -2690,9 +2642,9 @@
 
 
           summary.textContent =
-            "Cuộn lỗi "
+            "Cuộn "
             +
-            errorRoll.errorRollNumber;
+            errorRoll.sourceRollNumber;
 
 
 
@@ -2995,7 +2947,7 @@
 
       currentErrorElement.textContent =
         safeNumber(
-          data.currentErrorLabels
+          currentRoll.errorLabels
         );
 
 
@@ -3266,10 +3218,14 @@
             ? {
 
 
-                errorRoll_001: {
+                roll_001: {
 
 
-                  errorRollNumber:
+                  sourceRollId:
+                    "roll_001",
+
+
+                  sourceRollNumber:
                     1,
 
 
