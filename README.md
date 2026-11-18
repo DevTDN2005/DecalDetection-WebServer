@@ -381,7 +381,7 @@ Detailed technical documentation will be maintained in the `docs/` directory, in
 
 ## 11. Author | Tác giả
 
-**Neil**
+**Trần Đại Nghĩa - Neil**, **Nguyễn Ngọc Gia Hân**, **Huỳnh Chí Vỹ**, **Nguyễn Quang Thuận**
 
 Embedded Systems | Computer Vision | Edge AI
 
