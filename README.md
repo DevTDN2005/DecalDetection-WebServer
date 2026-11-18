@@ -50,25 +50,31 @@ A USB camera captures the production images, while an NVIDIA Jetson Nano perform
 
 ### Tiếng Việt
 
-Hệ thống được chia thành các khối chức năng chính:
+Hệ thống được thiết kế theo mô hình xử lý nhúng kết hợp giám sát và điều khiển. NVIDIA Jetson Nano đóng vai trò bộ xử lý trung tâm, tiếp nhận hình ảnh từ camera USB và thực hiện các tác vụ AI. ESP32 đảm nhiệm điều khiển phần cứng ngoại vi thông qua giao tiếp UART.
 
-1. **Khối thu nhận hình ảnh:** Camera USB ghi nhận hình ảnh cuộn decal đang chuyển động.
-2. **Khối xử lý AI:** Jetson Nano thực hiện nhận diện nhãn và phát hiện lỗi.
-3. **Khối theo dõi và đếm:** ByteTrack kết hợp Line Crossing để xác định và đếm từng nhãn.
-4. **Khối điều khiển:** ESP32 giao tiếp với Jetson Nano thông qua UART.
-5. **Khối quản lý dữ liệu:** Lưu trữ kết quả kiểm tra và hình ảnh lỗi.
+Ngoài ra, hệ thống tích hợp Web Dashboard và ứng dụng Windows nhằm hỗ trợ giám sát và tương tác với hệ thống.
+
+**Các khối chức năng:**
+
+1. **Image Acquisition:** Camera USB thu nhận hình ảnh cuộn decal đang chuyển động.
+2. **Central Processing (MPU):** Jetson Nano xử lý hình ảnh, chạy mô hình AI và quản lý chương trình chính.
+3. **Embedded Control (MCU):** ESP32 nhận lệnh qua UART và điều khiển thiết bị ngoại vi.
+4. **Web Monitoring (WEB):** Giao diện Web hỗ trợ theo dõi dữ liệu hệ thống.
+5. **Desktop Application (APP):** Ứng dụng Windows cung cấp giao diện tương tác và vận hành.
 
 ### English
 
-The system consists of several functional modules:
+The system follows an embedded processing architecture integrated with monitoring and hardware control. NVIDIA Jetson Nano acts as the central processing unit, acquiring images from the USB camera and executing AI inference. ESP32 handles peripheral control through UART communication.
 
-1. **Image Acquisition:** A USB camera captures images of the moving decal roll.
-2. **AI Processing:** Jetson Nano performs decal detection and defect inspection.
-3. **Tracking and Counting:** ByteTrack and Line Crossing algorithms track and count individual decals.
-4. **Control Module:** ESP32 communicates with Jetson Nano through UART.
-5. **Data Management:** Inspection results and defect images are stored for further analysis.
+A Web Dashboard and a Windows desktop application are also integrated to support system monitoring and operator interaction.
 
----
+**Functional modules:**
+
+1. **Image Acquisition:** Captures images of the moving decal roll using a USB camera.
+2. **Central Processing (MPU):** Jetson Nano performs image processing, AI inference, and main application control.
+3. **Embedded Control (MCU):** ESP32 receives commands through UART and controls peripheral devices.
+4. **Web Monitoring (WEB):** Provides a web interface for monitoring system data.
+5. **Desktop Application (APP):** Provides a Windows-based interface for system interaction and operation.
 
 ## 3. Hardware Components | Phần cứng sử dụng
 
