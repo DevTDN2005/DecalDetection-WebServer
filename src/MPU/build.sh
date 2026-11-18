@@ -2,7 +2,7 @@
 set -e
 cd "$(dirname "$0")"
 
-sudo pkill -INT -x main
+sudo pkill -INT -x main || true
 
 g++ -std=c++17 -O2 \
   mainCompile.cpp -o main \
