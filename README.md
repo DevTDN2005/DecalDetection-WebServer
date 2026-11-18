@@ -244,86 +244,100 @@ The system has been tested under continuous decal roll movement conditions.
 ## 7. Repository Structure | Cấu trúc thư mục
 
 ```text
-DAKTNC-TH/
+DecalDetection-WebServer/
 │
-├── src/
-│   ├── main.cpp
-│   ├── camera/
-│   ├── detection/
-│   ├── tracking/
-│   ├── counting/
-│   └── communication/
-│
-├── include/
-│
-├── models/
-│   └── README.md
-│
-├── training/
-│   ├── dataset/
-│   ├── scripts/
-│   └── README.md
-│
-├── docs/
-│   ├── architecture/
-│   ├── hardware/
-│   └── experiments/
+├── README.md
+├── index.html
 │
 ├── images/
+│   ├── 2026-11-09/
+│   └── 2026-11-10/
 │
-├── scripts/
-│
-├── CMakeLists.txt
-├── .gitignore
-└── README.md
+└── src/
+    ├── MPU/
+    │   ├── README.md
+    │   ├── main.cpp
+    │   ├── aiCore.hpp
+    │   └── build.sh
+    │
+    ├── MCU/
+    │   ├── README.md
+    │   ├── main.ino
+    │   ├── config.h
+    │   ├── module.h
+    │   ├── button.cpp
+    │   ├── lcd.cpp
+    │   ├── pot.cpp
+    │   ├── stepper_motor.cpp
+    │   └── uart_link.cpp
+    │
+    ├── WEB/
+    │   ├── README.md
+    │   └── index.html
+    │
+    └── APP/
+        ├── README.md
+        ├── Form1.cs
+        ├── Form1.Designer.cs
+        └── start_app.sh
 ```
 
-*This is a suggested repository structure. Actual directories should reflect the implemented source code.*
+The repository is organized into four main modules:
 
-*Cấu trúc trên là đề xuất tổ chức repository. Các thư mục thực tế cần được điều chỉnh theo source code đã triển khai.*
+- **MPU:** AI processing and embedded application running on Jetson Nano.
+- **MCU:** ESP32 firmware and peripheral control.
+- **WEB:** Web-based system monitoring interface.
+- **APP:** Windows desktop application developed using C# WinForms.
 
----
+The `images/` directory contains project-related images and experimental documentation.
 
 ## 8. Installation & Deployment | Cài đặt và triển khai
 
 ### Requirements | Yêu cầu
 
 - NVIDIA Jetson Nano 4GB
-- Compatible JetPack version
-- CUDA
-- TensorRT
-- OpenCV
-- CMake
-- C++ compiler
+- Compatible NVIDIA JetPack environment
+- CUDA Toolkit
+- NVIDIA TensorRT
+- OpenCV 4
+- C++17 Compiler
+- libcurl
 
-### Clone Repository | Tải mã nguồn
+### Build MPU Application | Biên dịch chương trình MPU
+
+Navigate to the MPU directory:
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
-cd DAKTNC-TH
+cd src/MPU
 ```
 
-### Build Project | Biên dịch
+Grant execution permission to the build script:
 
 ```bash
-mkdir build
-cd build
+chmod +x build.sh
+```
 
-cmake ..
-make -j$(nproc)
+Build the application:
+
+```bash
+./build.sh
 ```
 
 ### Run Application | Chạy chương trình
 
 ```bash
-./<EXECUTABLE_NAME>
+./main
 ```
 
-*Model files and hardware-specific configurations must be prepared before execution.*
+### Notes | Lưu ý
 
-*Các file model và cấu hình phần cứng cần được chuẩn bị trước khi chạy chương trình.*
+- The application requires compatible CUDA, TensorRT, and OpenCV libraries.
+- The TensorRT engine files must be available before AI inference.
+- Camera and hardware configurations must match the deployment environment.
 
----
+- Cần cài đặt đúng phiên bản CUDA, TensorRT và OpenCV tương thích.
+- Các file TensorRT Engine phải được chuẩn bị trước khi chạy nhận diện.
+- Cấu hình camera và phần cứng phải phù hợp với môi trường triển khai.
 
 ## 9. Limitations & Future Improvements | Hạn chế và hướng phát triển
 
@@ -357,29 +371,18 @@ make -j$(nproc)
 
 ## 10. Documentation | Tài liệu kỹ thuật
 
-### Tiếng Việt
+Detailed implementation guides are available in each module:
 
-Tài liệu chi tiết của dự án sẽ được tổ chức trong thư mục `docs/`, bao gồm:
+| Module | Documentation |
+|---|---|
+| MPU – Jetson Nano | `src/MPU/README.md` |
+| MCU – ESP32 | `src/MCU/README.md` |
+| WEB – Web Dashboard | `src/WEB/README.md` |
+| APP – Windows Application | `src/APP/README.md` |
 
-- Sơ đồ khối phần cứng và phần mềm.
-- Hướng dẫn lắp đặt và kết nối thiết bị.
-- Kiến trúc chương trình và luồng xử lý.
-- Quy trình huấn luyện và triển khai mô hình AI.
-- Quy trình chuẩn bị và gán nhãn dữ liệu.
-- Kết quả thử nghiệm và đánh giá hiệu năng.
+These documents provide module-specific information, setup instructions, and implementation details.
 
-### English
-
-Detailed technical documentation will be maintained in the `docs/` directory, including:
-
-- Hardware and software architecture diagrams.
-- Hardware installation and connection guides.
-- Software architecture and processing pipeline.
-- AI model training and deployment procedures.
-- Dataset preparation and annotation guidelines.
-- Experimental results and performance evaluation.
-
----
+Tài liệu của từng thành phần bao gồm hướng dẫn cài đặt, cấu hình phần cứng, cách triển khai và thông tin kỹ thuật liên quan.
 
 ## 11. Author | Tác giả
 
